@@ -1,4 +1,5 @@
 ﻿import { ResourceManager } from "./ResourceManager";
+import { InputManager } from "./InputManager";
 
 type ObstacleType = "wall" | "money" | "dirt";
 
@@ -13,20 +14,15 @@ interface IObstacle {
     animation?: string;
 }
 
-enum keyCodes {
-    up = 38,
-    down = 40,
-    left = 37,
-    right = 39
-}
-
-
 class App {
     public start(): void {
         var scoreEl: HTMLElement = document.getElementById("score"),
             livesEl: HTMLElement = document.getElementById("lives"),
             canvasEl: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById("canvas"),
             context: CanvasRenderingContext2D = canvasEl.getContext("2d");
+
+        var resources: ResourceManager,
+            input: InputManager;
 
         var lastFrameTime;
 
@@ -48,35 +44,6 @@ class App {
         var obstacles: IObstacle[] = [];
         var obstacleMinY = 1000;
 
-        var keysDown: { [keyCode: number]: boolean; } = {};
-
-        var hasTouch = "ontouchstart" in document.documentElement;
-
-        var resources;
-
-        var setUpInput = function (): void {
-            window.onkeydown = function (e: KeyboardEvent): void {
-                keysDown[e.keyCode] = true;
-            };
-
-            window.onkeyup = function (e: KeyboardEvent): void {
-                keysDown[e.keyCode] = false;
-            };
-
-            if (hasTouch) {
-                canvasEl.ontouchstart = function (e: TouchEvent): void {
-                    var t: Touch = e.touches[0];
-                    var x = t.pageX - canvasEl.offsetLeft;
-                    car.lane = x < canvasEl.width / 2 ? 0 : 1;
-                };
-            } else {
-                canvasEl.onmousedown = function (e: MouseEvent): void {
-                    var x = e.pageX - canvasEl.offsetLeft;
-                    car.lane = x < canvasEl.width / 2 ? 0 : 1;
-                };
-            }
-        };
-
         var startGame = function (): void {
             let carImage = resources.getImage("car");
 
@@ -88,6 +55,10 @@ class App {
             lastFrameTime = +new Date;
 
             gameLoop();
+        };
+
+        var setUpInput = function (): void {
+            input = new InputManager(canvasEl);
         };
 
         var loadResources = function (): void {
@@ -296,10 +267,10 @@ class App {
         function drawCar(dt: number): void {
             let carImage = resources.getImage("car");
 
-            if (keysDown[keyCodes.left]) car.lane = 0;
-            if (keysDown[keyCodes.right]) car.lane = 1;
-
-            car.x = laneToX(car.lane, carImage.width);
+            if (input.laneChangeRequested >= 0) {
+                car.lane = input.laneChangeRequested;
+                car.x = laneToX(car.lane, carImage.width);
+            }
 
             context.save();
             context.globalAlpha = 1;
