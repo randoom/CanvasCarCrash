@@ -27,4 +27,8 @@ export class Display {
     public updateLives(lives: string): void {
         this.livesEl.innerHTML = lives;
     }
+
+    public clear(): void {
+        this.context.clearRect(0, 0, this.width, this.height);
+    }
 }

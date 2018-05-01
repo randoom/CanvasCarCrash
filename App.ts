@@ -80,7 +80,7 @@ class App {
 
         var drawFrame = function (t: number, dt: number): void {
 
-            display.context.clearRect(0, 0, display.width, display.height);
+            display.clear();
 
             drawRoad(dt);
 
@@ -171,9 +171,6 @@ class App {
         var drawObstacle = function (t: number, dt: number, obstacle: IObstacle): void {
             obstacle.y += dt * car.speed;
 
-            display.context.save();
-            display.context.translate(obstacle.x, Math.round(obstacle.y));
-
             if (obstacle.animation) {
                 var animDt = t - obstacle.animationStart;
                 var animFrame = animDt / 20;
@@ -185,18 +182,16 @@ class App {
                     display.context.drawImage(animationImage,
                         animX, animY,
                         64, 64,
-                        obstacle.image.width / 2 - 32, obstacle.image.height / 2 - 32,
+                        obstacle.x + obstacle.image.width / 2 - 32, obstacle.y + obstacle.image.height / 2 - 32,
                         64, 64);
                 }
             } else {
-                display.context.drawImage(obstacle.image, 0, 0);
+                display.context.drawImage(obstacle.image, obstacle.x, obstacle.y);
             }
-
-            display.context.restore();
         };
 
         var createObstacle = function (): void {
-            var lane = (Math.random() > 0.5) ? 0 : 1;
+            var lane = Math.random() > 0.5 ? 0 : 1;
 
             var type;
             var typeRandom = Math.random();
@@ -269,10 +264,7 @@ class App {
             car.x = laneToX(car.lane, carImage.width);
             car.y = display.height - carImage.height - 20;
 
-            display.context.save();
-            display.context.translate(car.x, car.y);
-            display.context.drawImage(carImage, 0, 0);
-            display.context.restore();
+            display.context.drawImage(carImage, car.x, car.y);
         }
 
         display = new Display();
