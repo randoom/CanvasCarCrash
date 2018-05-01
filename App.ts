@@ -1,5 +1,5 @@
 ﻿import { ResourceManager } from "./ResourceManager";
-import { InputManager } from "./InputManager";
+import { Input } from "./InputManager";
 
 type ObstacleType = "wall" | "money" | "dirt";
 
@@ -22,7 +22,7 @@ class App {
             context: CanvasRenderingContext2D = canvasEl.getContext("2d");
 
         var resources: ResourceManager,
-            input: InputManager;
+            input: Input;
 
         var lastFrameTime;
 
@@ -58,7 +58,7 @@ class App {
         };
 
         var setUpInput = function (): void {
-            input = new InputManager(canvasEl);
+            input = new Input(canvasEl);
         };
 
         var loadResources = function (): void {

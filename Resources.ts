@@ -1,5 +1,5 @@
 
-export class ResourceManager {
+export class Resources {
     private finishedCallback: () => void;
     private resourcesToLoad = 0;
     private images: { [name: string]: HTMLImageElement; } = {};

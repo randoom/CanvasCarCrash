@@ -5,7 +5,7 @@ enum keyCodes {
     right = 39
 }
 
-export class InputManager {
+export class Input {
     private readonly hasTouch = "ontouchstart" in document.documentElement;
 
     private keysDown: { [keyCode: number]: boolean; } = {};
