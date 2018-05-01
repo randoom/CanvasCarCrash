@@ -1,6 +1,19 @@
-﻿import {ResourceManager} from "./ResourceManager";
+﻿import { ResourceManager } from "./ResourceManager";
 
-(function () {
+type ObstacleType = "wall" | "money" | "dirt";
+
+interface IObstacle {
+    colided: boolean;
+    type: ObstacleType;
+    lane: number;
+    x: number;
+    y: number;
+    image: HTMLImageElement;
+    animationStart?: number;
+    animation?: string;
+}
+
+(function (): void {
     var App = (<any>window).App = { start: null };
 
     var keyCodes = {
@@ -10,8 +23,11 @@
         right: 39
     };
 
-    App.start = function () {
-        var scoreEl, livesEl, canvasEl, context;
+    App.start = function (): void {
+        var scoreEl: HTMLElement,
+            livesEl: HTMLElement,
+            canvasEl: HTMLCanvasElement,
+            context: CanvasRenderingContext2D;
 
         var lastFrameTime;
 
@@ -27,48 +43,43 @@
             x: 0,
             y: 0,
             lane: 0,
-            speed: 0,
-            immunity: false
+            speed: 0
         };
 
-        var keysDown = {};
+        var keysDown:{ [keyCode: number]: boolean; } = {};
 
-        window.onkeydown = function (e) {
+        window.onkeydown = function (e: KeyboardEvent): void {
             keysDown[e.keyCode] = true;
         };
 
-        window.onkeyup = function (e) {
+        window.onkeyup = function (e: KeyboardEvent): void {
             keysDown[e.keyCode] = false;
         };
 
         scoreEl = document.getElementById("score");
         livesEl = document.getElementById("lives");
 
-        canvasEl = document.getElementById("canvas");
+        canvasEl = <HTMLCanvasElement>document.getElementById("canvas");
         context = canvasEl.getContext("2d");
 
         var hasTouch = "ontouchstart" in document.documentElement;
 
         if (hasTouch) {
-            canvasEl.ontouchstart = function (e) {
-                e = e.touches[0];
-                var x = e.pageX - canvasEl.offsetLeft;
-                if (x < canvasEl.width / 2) car.lane = 0;
-                else car.lane = 1;
+            canvasEl.ontouchstart = function (e: TouchEvent): void {
+                var t: Touch = e.touches[0];
+                var x = t.pageX - canvasEl.offsetLeft;
+                car.lane = x < canvasEl.width / 2 ? 0 : 1;
             };
         } else {
-            canvasEl.onmousedown = function (e) {
+            canvasEl.onmousedown = function (e: MouseEvent): void {
                 var x = e.pageX - canvasEl.offsetLeft;
-                if (x < canvasEl.width / 2) car.lane = 0;
-                else car.lane = 1;
+                car.lane = x < canvasEl.width / 2 ? 0 : 1;
             };
         }
 
         var resources;
-        var frameCount = 0;
-        var startTime;
 
-        var start = function () {
+        var start = function (): void {
             let carImage = resources.getImage("car");
 
             score = 0;
@@ -76,7 +87,7 @@
             car.speed = minSpeed;
             car.y = canvasEl.height - carImage.height - 20;
 
-            startTime = lastFrameTime = +new Date;
+            lastFrameTime = +new Date;
 
             gameLoop();
         };
@@ -92,7 +103,7 @@
 
         var totalTime = 0;
 
-        var gameLoop = function () {
+        var gameLoop = function (): void {
             window.requestAnimationFrame(gameLoop);
 
             var t = +new Date;
@@ -102,14 +113,11 @@
 
             lastFrameTime = t;
 
-            frameCount++;
-            var milisSinceStart = t - startTime;
-
             var frameTime = (+new Date - t);
             totalTime += frameTime;
         };
 
-        var drawFrame = function (t, dt) {
+        var drawFrame = function (t: number, dt: number): void {
 
             context.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
@@ -130,9 +138,9 @@
             }
         };
 
-        var obstacles = [];
+        var obstacles:IObstacle[] = [];
         var obstacleMinY = 1000;
-        var drawObstacles = function (t, dt) {
+        var drawObstacles = function (t: number, dt: number): void {
             let carImage = resources.getImage("car");
 
             var random = Math.random() * 200;
@@ -144,7 +152,7 @@
             obstacleMinY = 1000;
 
             var toRemove = [];
-            for (var i in obstacles) {
+            for (var i = 0; i < obstacles.length; i++) {
                 var obstacle = obstacles[i];
 
                 drawObstacle(t, dt, obstacle);
@@ -161,25 +169,23 @@
             removeObstacles(toRemove);
         };
 
-        var removeObstacles = function (indexes) {
+        var removeObstacles = function (indexes: number[]): void {
             indexes.reverse();
-            for (var j = 0; j < indexes.length; j++) {
-                obstacles.splice(j, 1);
+            for (var i = 0; i < indexes.length; i++) {
+                obstacles.splice(i, 1);
             }
         };
 
-        var playSound = function (sound) {
+        var playSound = function (sound: HTMLAudioElement): void {
             if (sound.canPlayType("audio/mp3") === "") return;
             if (navigator.userAgent.indexOf("hpwOS") >= 0) return;
-
-            sound.src = "sounds/explosion.mp3";
             sound.play();
         };
 
-        var checkCollision = function (t) {
+        var checkCollision = function (t: number): void {
             let carImage = resources.getImage("car");
 
-            for (var i in obstacles) {
+            for (var i = 0; i < obstacles.length; i++) {
                 var obstacle = obstacles[i];
 
                 if (!obstacle.colided && obstacle.lane === car.lane &&
@@ -203,7 +209,7 @@
             }
         };
 
-        var drawObstacle = function (t, dt, obstacle) {
+        var drawObstacle = function (t: number, dt: number, obstacle: IObstacle): void {
             obstacle.y += dt * car.speed;
 
             context.save();
@@ -230,7 +236,7 @@
             context.restore();
         };
 
-        var createObstacle = function () {
+        var createObstacle = function (): void {
             var lane = (Math.random() > 0.5) ? 0 : 1;
 
             var type;
@@ -256,10 +262,10 @@
             obstacles.push(obstacle);
         };
 
-        var drawRoad = function (deltaT) {
+        var drawRoad = function (dt: number): void {
             var roadImage = resources.getImage("road");
 
-            roadY += deltaT * car.speed;
+            roadY += dt * car.speed;
 
             roadY = roadY % roadImage.height;
 
@@ -289,12 +295,12 @@
             }
         };
 
-        var laneToX = function (lane, width) {
+        var laneToX = function (lane: number, width: number): number {
             var roadImage = resources.getImage("road");
             return (canvasEl.width - roadImage.width / 2) / 2 - width / 2 + lane * roadImage.width / 2;
         };
 
-        function drawCar(dt) {
+        function drawCar(dt: number): void {
             let carImage = resources.getImage("car");
 
             if (keysDown[keyCodes.left]) car.lane = 0;

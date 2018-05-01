@@ -15,11 +15,11 @@ export class ResourceManager {
         let img = this.images[name] = new Image();
         img.onload = () => this.onResourceLoaded();
         img.src = "images/" + fileName;
-    };
+    }
 
     public loadSound(name: string, fileName: string): void {
         this.sounds[name] = new Audio("sounds/" + fileName);
-    };
+    }
 
     public getImage(name: string): HTMLImageElement {
         return this.images[name];
