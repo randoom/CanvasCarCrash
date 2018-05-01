@@ -28,8 +28,9 @@ class App {
 
         var roadY = .0;
 
-        var minSpeed = 0.4;
-        var acceleration = 0.001;
+        var carStartSpeed = 0.4;
+        var carEndSpeed = 1.0;
+        var carAcceleration = 0.00075;
 
         var car = {
             x: 0,
@@ -42,12 +43,9 @@ class App {
         var obstacleMinY = 1000;
 
         var startGame = function (): void {
-            let carImage = resources.getImage("car");
-
             score = 0;
             lives = 3;
-            car.speed = minSpeed;
-            car.y = display.height - carImage.height - 20;
+            car.speed = carStartSpeed;
 
             lastFrameTime = +new Date;
 
@@ -97,7 +95,7 @@ class App {
             if (lives <= 0) {
                 car.speed = 0;
             } else {
-                if (car.speed < 0.8) car.speed += acceleration;
+                if (car.speed < carEndSpeed) car.speed += carAcceleration;
             }
         };
 
@@ -160,9 +158,9 @@ class App {
                         obstacle.animationStart = t;
                         obstacle.animation = "explosion";
                         lives--;
-                        car.speed = minSpeed;
+                        car.speed = carStartSpeed;
                     } else if (obstacle.type === "dirt") {
-                        car.speed = (minSpeed + car.speed) / 2;
+                        car.speed = (carStartSpeed + car.speed) / 2;
                     } else if (obstacle.type === "money") {
                         score += 50;
                     }
@@ -266,11 +264,12 @@ class App {
 
             if (input.laneChangeRequested >= 0) {
                 car.lane = input.laneChangeRequested;
-                car.x = laneToX(car.lane, carImage.width);
             }
 
+            car.x = laneToX(car.lane, carImage.width);
+            car.y = display.height - carImage.height - 20;
+
             display.context.save();
-            display.context.globalAlpha = 1;
             display.context.translate(car.x, car.y);
             display.context.drawImage(carImage, 0, 0);
             display.context.restore();
