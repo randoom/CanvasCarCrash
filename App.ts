@@ -13,21 +13,20 @@ interface IObstacle {
     animation?: string;
 }
 
-(function (): void {
-    var App = (<any>window).App = { start: null };
+enum keyCodes {
+    up = 38,
+    down = 40,
+    left = 37,
+    right = 39
+}
 
-    var keyCodes = {
-        up: 38,
-        down: 40,
-        left: 37,
-        right: 39
-    };
 
-    App.start = function (): void {
-        var scoreEl: HTMLElement,
-            livesEl: HTMLElement,
-            canvasEl: HTMLCanvasElement,
-            context: CanvasRenderingContext2D;
+class App {
+    public start(): void {
+        var scoreEl: HTMLElement = document.getElementById("score"),
+            livesEl: HTMLElement = document.getElementById("lives"),
+            canvasEl: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById("canvas"),
+            context: CanvasRenderingContext2D = canvasEl.getContext("2d");
 
         var lastFrameTime;
 
@@ -46,40 +45,39 @@ interface IObstacle {
             speed: 0
         };
 
-        var keysDown:{ [keyCode: number]: boolean; } = {};
+        var obstacles: IObstacle[] = [];
+        var obstacleMinY = 1000;
 
-        window.onkeydown = function (e: KeyboardEvent): void {
-            keysDown[e.keyCode] = true;
-        };
-
-        window.onkeyup = function (e: KeyboardEvent): void {
-            keysDown[e.keyCode] = false;
-        };
-
-        scoreEl = document.getElementById("score");
-        livesEl = document.getElementById("lives");
-
-        canvasEl = <HTMLCanvasElement>document.getElementById("canvas");
-        context = canvasEl.getContext("2d");
+        var keysDown: { [keyCode: number]: boolean; } = {};
 
         var hasTouch = "ontouchstart" in document.documentElement;
 
-        if (hasTouch) {
-            canvasEl.ontouchstart = function (e: TouchEvent): void {
-                var t: Touch = e.touches[0];
-                var x = t.pageX - canvasEl.offsetLeft;
-                car.lane = x < canvasEl.width / 2 ? 0 : 1;
-            };
-        } else {
-            canvasEl.onmousedown = function (e: MouseEvent): void {
-                var x = e.pageX - canvasEl.offsetLeft;
-                car.lane = x < canvasEl.width / 2 ? 0 : 1;
-            };
-        }
-
         var resources;
 
-        var start = function (): void {
+        var setUpInput = function (): void {
+            window.onkeydown = function (e: KeyboardEvent): void {
+                keysDown[e.keyCode] = true;
+            };
+
+            window.onkeyup = function (e: KeyboardEvent): void {
+                keysDown[e.keyCode] = false;
+            };
+
+            if (hasTouch) {
+                canvasEl.ontouchstart = function (e: TouchEvent): void {
+                    var t: Touch = e.touches[0];
+                    var x = t.pageX - canvasEl.offsetLeft;
+                    car.lane = x < canvasEl.width / 2 ? 0 : 1;
+                };
+            } else {
+                canvasEl.onmousedown = function (e: MouseEvent): void {
+                    var x = e.pageX - canvasEl.offsetLeft;
+                    car.lane = x < canvasEl.width / 2 ? 0 : 1;
+                };
+            }
+        };
+
+        var startGame = function (): void {
             let carImage = resources.getImage("car");
 
             score = 0;
@@ -92,16 +90,16 @@ interface IObstacle {
             gameLoop();
         };
 
-        resources = new ResourceManager(start);
-        resources.loadImage("car", "car.png");
-        resources.loadImage("road", "road.jpg");
-        resources.loadImage("wall", "wall.png");
-        resources.loadImage("dirt", "dirt.png");
-        resources.loadImage("money", "money.png");
-        resources.loadImage("explosion", "explosion.png");
-        resources.loadSound("explosion", "explosion.mp3");
-
-        var totalTime = 0;
+        var loadResources = function (): void {
+            resources = new ResourceManager(startGame);
+            resources.loadImage("car", "car.png");
+            resources.loadImage("road", "road.jpg");
+            resources.loadImage("wall", "wall.png");
+            resources.loadImage("dirt", "dirt.png");
+            resources.loadImage("money", "money.png");
+            resources.loadImage("explosion", "explosion.png");
+            resources.loadSound("explosion", "explosion.mp3");
+        };
 
         var gameLoop = function (): void {
             window.requestAnimationFrame(gameLoop);
@@ -112,9 +110,6 @@ interface IObstacle {
             drawFrame(t, dt);
 
             lastFrameTime = t;
-
-            var frameTime = (+new Date - t);
-            totalTime += frameTime;
         };
 
         var drawFrame = function (t: number, dt: number): void {
@@ -138,8 +133,6 @@ interface IObstacle {
             }
         };
 
-        var obstacles:IObstacle[] = [];
-        var obstacleMinY = 1000;
         var drawObstacles = function (t: number, dt: number): void {
             let carImage = resources.getImage("car");
 
@@ -314,7 +307,11 @@ interface IObstacle {
             context.drawImage(carImage, 0, 0);
             context.restore();
         }
-    };
 
-    App.start();
-})();
+        setUpInput();
+        loadResources();
+    }
+}
+
+var app = new App();
+app.start();
