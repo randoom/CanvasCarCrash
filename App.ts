@@ -1,5 +1,5 @@
 ﻿(function () {
-    window.App = window.App || {};
+    var App = (<any>window).App = { start: null};
 
     var keyCodes = {
         up: 38,
@@ -10,8 +10,8 @@
 
     App.start = function () {
         var scoreEl, livesEl, canvasEl, context;
-        var images = {};
-        var sounds = {};
+        var images:{ [id: string] : HTMLImageElement; } = {};
+        var sounds:{ [id: string] : HTMLAudioElement; } = {};
         var lastFrameTime;
 
         var score,
@@ -77,7 +77,7 @@
         };
 
         var loadSound = function (name, fileName) {
-            sounds[name] = new window.Audio("sounds/" + fileName);
+            sounds[name] = new Audio("sounds/" + fileName);
         };
 
         loadImage("car", "car.png");
@@ -106,7 +106,7 @@
         var totalTime = 0;
 
         var gameLoop = function () {
-            window.requestAnimationFrame(gameLoop, canvasEl);
+            window.requestAnimationFrame(gameLoop);
 
             var t = +new Date;
             var dt = t - lastFrameTime;
@@ -120,8 +120,6 @@
 
             var frameTime = (+new Date - t);
             totalTime += frameTime;
-
-            debug(/*dt + " " + 1000 * frameCount / milisSinceStart + " " +*/1000 * totalTime / frameCount);
         };
 
         var drawFrame = function (t, dt) {
@@ -176,7 +174,7 @@
 
         var removeObstacles = function (indexes) {
             indexes.reverse();
-            for (var j in indexes) {
+            for (var j=0; j<indexes.length; j++) {
                 obstacles.splice(j, 1);
             }
         };
@@ -243,6 +241,7 @@
         var createObstacle = function () {
             var lane = (Math.random() > 0.5) ? 0 : 1;
 
+            var type;
             var typeRandom = Math.random();
             if (typeRandom < 0.1) {
                 type = "dirt";
@@ -299,7 +298,7 @@
             return (canvasEl.width - images.road.width / 2) / 2 - width / 2 + lane * images.road.width / 2;
         };
 
-        function drawCar() {
+        function drawCar(dt) {
 
             if (keysDown[keyCodes.left]) car.lane = 0;
             if (keysDown[keyCodes.right]) car.lane = 1;
