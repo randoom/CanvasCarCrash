@@ -1,5 +1,7 @@
-﻿(function () {
-    var App = (<any>window).App = { start: null};
+﻿import {ResourceManager} from "./ResourceManager";
+
+(function () {
+    var App = (<any>window).App = { start: null };
 
     var keyCodes = {
         up: 38,
@@ -10,8 +12,7 @@
 
     App.start = function () {
         var scoreEl, livesEl, canvasEl, context;
-        var images:{ [id: string] : HTMLImageElement; } = {};
-        var sounds:{ [id: string] : HTMLAudioElement; } = {};
+
         var lastFrameTime;
 
         var score,
@@ -62,46 +63,32 @@
                 else car.lane = 1;
             };
         }
-        var resourcesToLoad = 0;
-        var onResourceLoaded = function () {
-            if (--resourcesToLoad == 0) {
-                start();
-            }
-        };
 
-        var loadImage = function (name, fileName) {
-            resourcesToLoad++;
-            var img = images[name] = new Image();
-            img.onload = onResourceLoaded;
-            img.src = "images/" + fileName;
-        };
-
-        var loadSound = function (name, fileName) {
-            sounds[name] = new Audio("sounds/" + fileName);
-        };
-
-        loadImage("car", "car.png");
-        loadImage("road", "road.jpg");
-        loadImage("wall", "wall.png");
-        loadImage("dirt", "dirt.png");
-        loadImage("money", "money.png");
-        loadImage("explosion", "explosion.png");
-
-        loadSound("explosion", "explosion.mp3");
-
+        var resources;
         var frameCount = 0;
         var startTime;
 
         var start = function () {
+            let carImage = resources.getImage("car");
+
             score = 0;
             lives = 3;
             car.speed = minSpeed;
-            car.y = canvasEl.height - images.car.height - 20;
+            car.y = canvasEl.height - carImage.height - 20;
 
             startTime = lastFrameTime = +new Date;
 
             gameLoop();
         };
+
+        resources = new ResourceManager(start);
+        resources.loadImage("car", "car.png");
+        resources.loadImage("road", "road.jpg");
+        resources.loadImage("wall", "wall.png");
+        resources.loadImage("dirt", "dirt.png");
+        resources.loadImage("money", "money.png");
+        resources.loadImage("explosion", "explosion.png");
+        resources.loadSound("explosion", "explosion.mp3");
 
         var totalTime = 0;
 
@@ -146,9 +133,11 @@
         var obstacles = [];
         var obstacleMinY = 1000;
         var drawObstacles = function (t, dt) {
+            let carImage = resources.getImage("car");
+
             var random = Math.random() * 200;
 
-            if (random < obstacleMinY - images.car.height) {
+            if (random < obstacleMinY - carImage.height) {
                 createObstacle();
             }
 
@@ -174,7 +163,7 @@
 
         var removeObstacles = function (indexes) {
             indexes.reverse();
-            for (var j=0; j<indexes.length; j++) {
+            for (var j = 0; j < indexes.length; j++) {
                 obstacles.splice(j, 1);
             }
         };
@@ -188,17 +177,19 @@
         };
 
         var checkCollision = function (t) {
+            let carImage = resources.getImage("car");
+
             for (var i in obstacles) {
                 var obstacle = obstacles[i];
 
                 if (!obstacle.colided && obstacle.lane === car.lane &&
                     (obstacle.y + obstacle.image.height > car.y) &&
-                        (obstacle.y < car.y + images.car.height)) {
+                    (obstacle.y < car.y + carImage.height)) {
 
                     obstacle.colided = true;
 
                     if (obstacle.type === "wall") {
-                        playSound(sounds.explosion);
+                        playSound(resources.getSound("explosion"));
                         obstacle.animationStart = t;
                         obstacle.animation = "explosion";
                         lives--;
@@ -225,7 +216,8 @@
                     var animX = 64 * Math.floor(animFrame % 5);
                     var animY = 64 * Math.floor(animFrame / 5);
 
-                    context.drawImage(images[obstacle.animation],
+                    let animationImage = resources.getImage(obstacle.animation);
+                    context.drawImage(animationImage,
                         animX, animY,
                         64, 64,
                         obstacle.image.width / 2 - 32, obstacle.image.height / 2 - 32,
@@ -251,65 +243,72 @@
                 type = "wall";
             }
 
-            var image = images[type];
+            var obstacleImage = resources.getImage(type);
+            var wallImage = resources.getImage("wall");
             var obstacle = {
                 colided: false,
                 type: type,
-                x: laneToX(lane, images.wall.width),
-                y: -image.height,
-                image: image,
+                x: laneToX(lane, wallImage.width),
+                y: -obstacleImage.height,
+                image: obstacleImage,
                 lane: lane
             };
             obstacles.push(obstacle);
         };
 
         var drawRoad = function (deltaT) {
+            var roadImage = resources.getImage("road");
+
             roadY += deltaT * car.speed;
 
-            roadY = roadY % images.road.height;
+            roadY = roadY % roadImage.height;
 
             var y = Math.round(roadY);
 
             if (y > 0) {
-                context.drawImage(images.road,
-                    0, images.road.height - y,
-                    images.road.width, y,
-                    (canvasEl.width - images.road.width) / 2, 0,
-                    images.road.width, y);
+                context.drawImage(roadImage,
+                    0, roadImage.height - y,
+                    roadImage.width, y,
+                    (canvasEl.width - roadImage.width) / 2, 0,
+                    roadImage.width, y);
             }
 
             var i = 0;
             while (true) {
-                var height = Math.min(images.road.height, canvasEl.height - (y + i * images.road.height));
+                var height = Math.min(roadImage.height, canvasEl.height - (y + i * roadImage.height));
 
                 if (height <= 0) break;
 
-                context.drawImage(images.road,
+                context.drawImage(roadImage,
                     0, 0,
-                    images.road.width, height,
-                    (canvasEl.width - images.road.width) / 2, y + i * images.road.height,
-                    images.road.width, height);
+                    roadImage.width, height,
+                    (canvasEl.width - roadImage.width) / 2, y + i * roadImage.height,
+                    roadImage.width, height);
 
                 i++;
             }
         };
 
         var laneToX = function (lane, width) {
-            return (canvasEl.width - images.road.width / 2) / 2 - width / 2 + lane * images.road.width / 2;
+            var roadImage = resources.getImage("road");
+            return (canvasEl.width - roadImage.width / 2) / 2 - width / 2 + lane * roadImage.width / 2;
         };
 
         function drawCar(dt) {
+            let carImage = resources.getImage("car");
 
             if (keysDown[keyCodes.left]) car.lane = 0;
             if (keysDown[keyCodes.right]) car.lane = 1;
 
-            car.x = laneToX(car.lane, images.car.width);
+            car.x = laneToX(car.lane, carImage.width);
 
             context.save();
             context.globalAlpha = 1;
             context.translate(car.x, car.y);
-            context.drawImage(images.car, 0, 0);
+            context.drawImage(carImage, 0, 0);
             context.restore();
         }
     };
+
+    App.start();
 })();
