@@ -8,23 +8,6 @@
         right: 39
     };
 
-    window.requestAnimFrame =
-        window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (callback) {
-            window.setTimeout(callback, 1000 / 60);
-        };
-
-    var debugEl = document.getElementById("debug");
-
-    var debug = function (msg) {
-        return;
-        debugEl.innerHTML = msg;
-    };
-
     App.start = function () {
         var scoreEl, livesEl, canvasEl, context;
         var images = {};
@@ -48,31 +31,6 @@
         };
 
         var keysDown = {};
-
-        window.onerror = function (err) {
-            debug(err);
-        };
-
-        var setupInput = function (input) {
-            var el = document.getElementById("key-" + input);
-            if (!el) return;
-
-            el.onmousedown = function () {
-                el.style.backgroundColor = "#cfc";
-                keysDown[keyCodes[input]] = true;
-            };
-            el.onmouseout = function () {
-                el.style.backgroundColor = "#ccc";
-                keysDown[keyCodes[input]] = false;
-            };
-            el.onmouseup = function () {
-                el.style.backgroundColor = "#ccc";
-                keysDown[keyCodes[input]] = false;
-            };
-        };
-
-        setupInput("left");
-        setupInput("right");
 
         window.onkeydown = function (e) {
             keysDown[e.keyCode] = true;
@@ -148,7 +106,7 @@
         var totalTime = 0;
 
         var gameLoop = function () {
-            window.requestAnimFrame(gameLoop, canvasEl);
+            window.requestAnimationFrame(gameLoop, canvasEl);
 
             var t = +new Date;
             var dt = t - lastFrameTime;
