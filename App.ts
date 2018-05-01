@@ -1,5 +1,6 @@
-﻿import { ResourceManager } from "./ResourceManager";
-import { Input } from "./InputManager";
+﻿import { Resources } from "./Resources";
+import { Input } from "./Input";
+import { Display } from "./Display";
 
 type ObstacleType = "wall" | "money" | "dirt";
 
@@ -16,13 +17,9 @@ interface IObstacle {
 
 class App {
     public start(): void {
-        var scoreEl: HTMLElement = document.getElementById("score"),
-            livesEl: HTMLElement = document.getElementById("lives"),
-            canvasEl: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById("canvas"),
-            context: CanvasRenderingContext2D = canvasEl.getContext("2d");
-
-        var resources: ResourceManager,
-            input: Input;
+        var resources: Resources,
+            input: Input,
+            display: Display;
 
         var lastFrameTime;
 
@@ -50,7 +47,7 @@ class App {
             score = 0;
             lives = 3;
             car.speed = minSpeed;
-            car.y = canvasEl.height - carImage.height - 20;
+            car.y = display.height - carImage.height - 20;
 
             lastFrameTime = +new Date;
 
@@ -58,11 +55,11 @@ class App {
         };
 
         var setUpInput = function (): void {
-            input = new Input(canvasEl);
+            input = new Input(display.canvas);
         };
 
         var loadResources = function (): void {
-            resources = new ResourceManager(startGame);
+            resources = new Resources(startGame);
             resources.loadImage("car", "car.png");
             resources.loadImage("road", "road.jpg");
             resources.loadImage("wall", "wall.png");
@@ -85,7 +82,7 @@ class App {
 
         var drawFrame = function (t: number, dt: number): void {
 
-            context.clearRect(0, 0, canvasEl.width, canvasEl.height);
+            display.context.clearRect(0, 0, display.width, display.height);
 
             drawRoad(dt);
 
@@ -94,8 +91,8 @@ class App {
 
             checkCollision(t);
 
-            scoreEl.innerHTML = score;
-            livesEl.innerHTML = lives;
+            display.updateScore(score);
+            display.updateLives(lives);
 
             if (lives <= 0) {
                 car.speed = 0;
@@ -123,7 +120,7 @@ class App {
 
                 obstacleMinY = Math.min(obstacleMinY, obstacle.y - obstacle.image.height);
 
-                if (obstacle.y > canvasEl.height) {
+                if (obstacle.y > display.height) {
                     toRemove.push(i);
                 }
             }
@@ -176,8 +173,8 @@ class App {
         var drawObstacle = function (t: number, dt: number, obstacle: IObstacle): void {
             obstacle.y += dt * car.speed;
 
-            context.save();
-            context.translate(obstacle.x, Math.round(obstacle.y));
+            display.context.save();
+            display.context.translate(obstacle.x, Math.round(obstacle.y));
 
             if (obstacle.animation) {
                 var animDt = t - obstacle.animationStart;
@@ -187,17 +184,17 @@ class App {
                     var animY = 64 * Math.floor(animFrame / 5);
 
                     let animationImage = resources.getImage(obstacle.animation);
-                    context.drawImage(animationImage,
+                    display.context.drawImage(animationImage,
                         animX, animY,
                         64, 64,
                         obstacle.image.width / 2 - 32, obstacle.image.height / 2 - 32,
                         64, 64);
                 }
             } else {
-                context.drawImage(obstacle.image, 0, 0);
+                display.context.drawImage(obstacle.image, 0, 0);
             }
 
-            context.restore();
+            display.context.restore();
         };
 
         var createObstacle = function (): void {
@@ -236,23 +233,23 @@ class App {
             var y = Math.round(roadY);
 
             if (y > 0) {
-                context.drawImage(roadImage,
+                display.context.drawImage(roadImage,
                     0, roadImage.height - y,
                     roadImage.width, y,
-                    (canvasEl.width - roadImage.width) / 2, 0,
+                    (display.width - roadImage.width) / 2, 0,
                     roadImage.width, y);
             }
 
             var i = 0;
             while (true) {
-                var height = Math.min(roadImage.height, canvasEl.height - (y + i * roadImage.height));
+                var height = Math.min(roadImage.height, display.height - (y + i * roadImage.height));
 
                 if (height <= 0) break;
 
-                context.drawImage(roadImage,
+                display.context.drawImage(roadImage,
                     0, 0,
                     roadImage.width, height,
-                    (canvasEl.width - roadImage.width) / 2, y + i * roadImage.height,
+                    (display.width - roadImage.width) / 2, y + i * roadImage.height,
                     roadImage.width, height);
 
                 i++;
@@ -261,7 +258,7 @@ class App {
 
         var laneToX = function (lane: number, width: number): number {
             var roadImage = resources.getImage("road");
-            return (canvasEl.width - roadImage.width / 2) / 2 - width / 2 + lane * roadImage.width / 2;
+            return (display.width - roadImage.width / 2) / 2 - width / 2 + lane * roadImage.width / 2;
         };
 
         function drawCar(dt: number): void {
@@ -272,13 +269,14 @@ class App {
                 car.x = laneToX(car.lane, carImage.width);
             }
 
-            context.save();
-            context.globalAlpha = 1;
-            context.translate(car.x, car.y);
-            context.drawImage(carImage, 0, 0);
-            context.restore();
+            display.context.save();
+            display.context.globalAlpha = 1;
+            display.context.translate(car.x, car.y);
+            display.context.drawImage(carImage, 0, 0);
+            display.context.restore();
         }
 
+        display = new Display();
         setUpInput();
         loadResources();
     }
