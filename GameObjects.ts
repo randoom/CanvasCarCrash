@@ -1,4 +1,8 @@
-type ObstacleType = "wall" | "money" | "dirt";
+export enum ObstacleType {
+    wall = "wall",
+    money = "money",
+    dirt = "dirt"
+}
 
 abstract class GameObject {
     x: number = 0;
@@ -115,7 +119,7 @@ export class Obstacle extends GameObject {
     }
 
     draw(context: CanvasRenderingContext2D): void {
-        if (!this.colided) {
+        if (!this.colided || this.type === ObstacleType.dirt) {
             context.drawImage(this.image, this.x, this.y);
         }
 
