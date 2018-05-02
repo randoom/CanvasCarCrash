@@ -66,7 +66,7 @@ class App {
 
             for (var i = 0; i < obstacles.length; i++) {
                 var obstacle = obstacles[i];
-                obstacle.t = t;
+                obstacle.update(dt);
                 obstacle.y += dt * car.speed;
             }
 

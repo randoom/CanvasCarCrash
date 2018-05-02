@@ -9,7 +9,6 @@ abstract class GameObject {
     y: number = 0;
     width: number;
     height: number;
-    t: number;
 
     public abstract draw(context: CanvasRenderingContext2D): void;
 }
@@ -101,7 +100,7 @@ export class Obstacle extends GameObject {
 
     isAnimating: boolean = false;
     private animationImage?: HTMLImageElement;
-    private animationStart?: number;
+    private animationDuration?: number;
 
     constructor(type: ObstacleType, image: HTMLImageElement) {
         super();
@@ -112,10 +111,16 @@ export class Obstacle extends GameObject {
         this.height = this.image.height;
     }
 
-    public startAnimation(animationImage: HTMLImageElement): void {
+    startAnimation(animationImage: HTMLImageElement): void {
         this.animationImage = animationImage;
-        this.animationStart = this.t;
+        this.animationDuration = 0;
         this.isAnimating = true;
+    }
+
+    update(dt: number): void {
+        if (this.isAnimating) {
+            this.animationDuration += dt;
+        }
     }
 
     draw(context: CanvasRenderingContext2D): void {
@@ -124,8 +129,7 @@ export class Obstacle extends GameObject {
         }
 
         if (this.isAnimating) {
-            var animationDt = this.t - this.animationStart;
-            var animFrame = animationDt / 20;
+            var animFrame = this.animationDuration / 20;
             if (animFrame >= 0 && animFrame < 25) {
                 var animX = 64 * Math.floor(animFrame % 5);
                 var animY = 64 * Math.floor(animFrame / 5);
