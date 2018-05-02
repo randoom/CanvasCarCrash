@@ -8,22 +8,27 @@ class Game {
     input: Input;
     display: Display;
 
-    score: number;
-    lives: number;
+    score: number = 0;
+    lives: number = 0;
 
     road: Road;
     car: Car;
     obstacles: Obstacle[] = [];
 
-    lastFrameTime: number;
+    lastFrameTime: number | null = null;
     obstacleMinY = 1000;
 
-    startNewGame(): void {
-        this.score = 0;
-        this.lives = 3;
-
+    constructor(resources: Resources) {
+        this.resources = resources;
+        this.display = new Display();
+        this.input = new Input(this.display.canvas);
         this.road = new Road(this.resources.getImage("road"), this.display.height);
         this.car = new Car(this.resources.getImage("car"));
+    }
+
+    start(): void {
+        this.score = 0;
+        this.lives = 3;
 
         this.lastFrameTime = null;
         requestAnimationFrame((t) => this.gameLoop(t));
@@ -163,23 +168,24 @@ class Game {
         return (this.display.width * (0.5 + lane) - width) / 2;
     }
 
-    loadResources(): void {
-        this.resources = new Resources(() => this.startNewGame());
-        this.resources.loadImage("car", "car.png");
-        this.resources.loadImage("road", "road.jpg");
-        this.resources.loadImage("wall", "wall.png");
-        this.resources.loadImage("dirt", "dirt.png");
-        this.resources.loadImage("money", "money.png");
-        this.resources.loadImage("explosion", "explosion.png");
-        this.resources.loadSound("explosion", "explosion.mp3");
+    static loadResources(resources: Resources): void {
+        resources.loadImage("car", "car.png");
+        resources.loadImage("road", "road.jpg");
+        resources.loadImage("wall", "wall.png");
+        resources.loadImage("dirt", "dirt.png");
+        resources.loadImage("money", "money.png");
+        resources.loadImage("explosion", "explosion.png");
+        resources.loadSound("explosion", "explosion.mp3");
     }
 
-    init(): void {
-        this.display = new Display();
-        this.input = new Input(this.display.canvas);
-        this.loadResources();
+    static init(): void {
+        var resources = new Resources(() => {
+            var game = new Game(resources);
+            game.start();
+        });
+        this.loadResources(resources);
     }
 }
 
-var app = new Game();
-app.init();
+Game.init();
+

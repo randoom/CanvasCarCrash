@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "es5",
     "sourceMap": true,
-    "module": "amd"
+    "module": "amd",
+    "strict": true
   },
   "include": [
     "*.ts"

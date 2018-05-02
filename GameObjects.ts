@@ -7,8 +7,8 @@ export enum ObstacleType {
 abstract class GameObject {
     x: number = 0;
     y: number = 0;
-    width: number;
-    height: number;
+    width: number = 0;
+    height: number = 0;
 
     public abstract draw(context: CanvasRenderingContext2D): void;
 }
@@ -94,13 +94,12 @@ export class Car extends GameObject {
 export class Obstacle extends GameObject {
     colided: boolean = false;
     type: ObstacleType;
-    lane: number;
+    lane: number = 0;
 
     image: HTMLImageElement;
 
-    isAnimating: boolean = false;
-    private animationImage?: HTMLImageElement;
-    private animationElapsed?: number;
+    private animationImage: HTMLImageElement | null = null;
+    private animationElapsed: number = 0;
 
     constructor(type: ObstacleType, image: HTMLImageElement) {
         super();
@@ -114,11 +113,10 @@ export class Obstacle extends GameObject {
     startAnimation(animationImage: HTMLImageElement): void {
         this.animationImage = animationImage;
         this.animationElapsed = 0;
-        this.isAnimating = true;
     }
 
     update(dt: number): void {
-        if (this.isAnimating) {
+        if (this.animationImage) {
             this.animationElapsed += dt;
         }
     }
@@ -130,7 +128,7 @@ export class Obstacle extends GameObject {
             context.drawImage(this.image, this.x, this.y);
         }
 
-        if (this.isAnimating) {
+        if (this.animationImage) {
             var animFrame = this.animationElapsed / 20;
             if (animFrame >= 0 && animFrame < 25) {
                 var animX = spriteSize * Math.floor(animFrame % 5);
@@ -142,7 +140,6 @@ export class Obstacle extends GameObject {
                     this.x + (this.width - spriteSize) / 2, this.y + (this.height - spriteSize) / 2,
                     spriteSize, spriteSize);
             } else {
-                this.isAnimating = false;
                 this.animationImage = null;
             }
         }
