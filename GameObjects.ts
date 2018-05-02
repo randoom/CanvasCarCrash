@@ -100,7 +100,7 @@ export class Obstacle extends GameObject {
 
     isAnimating: boolean = false;
     private animationImage?: HTMLImageElement;
-    private animationDuration?: number;
+    private animationElapsed?: number;
 
     constructor(type: ObstacleType, image: HTMLImageElement) {
         super();
@@ -113,32 +113,34 @@ export class Obstacle extends GameObject {
 
     startAnimation(animationImage: HTMLImageElement): void {
         this.animationImage = animationImage;
-        this.animationDuration = 0;
+        this.animationElapsed = 0;
         this.isAnimating = true;
     }
 
     update(dt: number): void {
         if (this.isAnimating) {
-            this.animationDuration += dt;
+            this.animationElapsed += dt;
         }
     }
 
     draw(context: CanvasRenderingContext2D): void {
+        const spriteSize = 64;
+
         if (!this.colided || this.type === ObstacleType.dirt) {
             context.drawImage(this.image, this.x, this.y);
         }
 
         if (this.isAnimating) {
-            var animFrame = this.animationDuration / 20;
+            var animFrame = this.animationElapsed / 20;
             if (animFrame >= 0 && animFrame < 25) {
-                var animX = 64 * Math.floor(animFrame % 5);
-                var animY = 64 * Math.floor(animFrame / 5);
+                var animX = spriteSize * Math.floor(animFrame % 5);
+                var animY = spriteSize * Math.floor(animFrame / 5);
 
                 context.drawImage(this.animationImage,
                     animX, animY,
-                    64, 64,
-                    this.x + this.width / 2 - 32, this.y + this.height / 2 - 32,
-                    64, 64);
+                    spriteSize, spriteSize,
+                    this.x + (this.width - spriteSize) / 2, this.y + (this.height - spriteSize) / 2,
+                    spriteSize, spriteSize);
             } else {
                 this.isAnimating = false;
                 this.animationImage = null;
