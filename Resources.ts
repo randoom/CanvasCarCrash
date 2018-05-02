@@ -25,8 +25,12 @@ export class Resources {
         return this.images[name];
     }
 
-    public getSound(name: string): HTMLAudioElement {
-        return this.sounds[name];
+    public playSound(name: string): void {
+        let sound = this.sounds[name];
+        if (sound.canPlayType("audio/mp3") === "") return;
+        if (navigator.userAgent.indexOf("hpwOS") >= 0) return;
+
+        sound.play();
     }
 
     private onResourceLoaded(): void {

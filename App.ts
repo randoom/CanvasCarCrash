@@ -1,19 +1,7 @@
 ﻿import { Resources } from "./Resources";
 import { Input } from "./Input";
 import { Display } from "./Display";
-
-type ObstacleType = "wall" | "money" | "dirt";
-
-interface IObstacle {
-    colided: boolean;
-    type: ObstacleType;
-    lane: number;
-    x: number;
-    y: number;
-    image: HTMLImageElement;
-    animationStart?: number;
-    animation?: string;
-}
+import { Road, Car, Obstacle } from "./GameObjects";
 
 class App {
     public start(): void {
@@ -21,43 +9,29 @@ class App {
             input: Input,
             display: Display;
 
-        var lastFrameTime;
-
         var score,
             lives;
 
-        var roadY = .0;
+        var road: Road;
+        var car: Car;
+        var obstacles: Obstacle[] = [];
 
-        var carStartSpeed = 0.4;
-        var carEndSpeed = 1.0;
-        var carAcceleration = 0.00075;
-
-        var car = {
-            x: 0,
-            y: 0,
-            lane: 0,
-            speed: 0
-        };
-
-        var obstacles: IObstacle[] = [];
+        var lastFrameTime;
         var obstacleMinY = 1000;
 
-        var startGame = function (): void {
+        var startNewGame = function (): void {
             score = 0;
             lives = 3;
-            car.speed = carStartSpeed;
 
-            lastFrameTime = +new Date;
+            road = new Road(resources.getImage("road"), display.height);
+            car = new Car(resources.getImage("car"));
 
-            gameLoop();
-        };
-
-        var setUpInput = function (): void {
-            input = new Input(display.canvas);
+            lastFrameTime = null;
+            requestAnimationFrame(gameLoop);
         };
 
         var loadResources = function (): void {
-            resources = new Resources(startGame);
+            resources = new Resources(startNewGame);
             resources.loadImage("car", "car.png");
             resources.loadImage("road", "road.jpg");
             resources.loadImage("wall", "wall.png");
@@ -67,10 +41,11 @@ class App {
             resources.loadSound("explosion", "explosion.mp3");
         };
 
-        var gameLoop = function (): void {
-            window.requestAnimationFrame(gameLoop);
+        var gameLoop = function (t: number): void {
+            requestAnimationFrame(gameLoop);
 
-            var t = +new Date;
+            if (!lastFrameTime) lastFrameTime = t;
+
             var dt = t - lastFrameTime;
 
             drawFrame(t, dt);
@@ -93,18 +68,16 @@ class App {
             display.updateLives(lives);
 
             if (lives <= 0) {
-                car.speed = 0;
+                car.stop();
             } else {
-                if (car.speed < carEndSpeed) car.speed += carAcceleration;
+                car.accelerate();
             }
         };
 
         var drawObstacles = function (t: number, dt: number): void {
-            let carImage = resources.getImage("car");
-
             var random = Math.random() * 200;
 
-            if (random < obstacleMinY - carImage.height) {
+            if (random < obstacleMinY - car.height) {
                 createObstacle();
             }
 
@@ -135,32 +108,23 @@ class App {
             }
         };
 
-        var playSound = function (sound: HTMLAudioElement): void {
-            if (sound.canPlayType("audio/mp3") === "") return;
-            if (navigator.userAgent.indexOf("hpwOS") >= 0) return;
-            sound.play();
-        };
-
         var checkCollision = function (t: number): void {
-            let carImage = resources.getImage("car");
-
             for (var i = 0; i < obstacles.length; i++) {
                 var obstacle = obstacles[i];
 
                 if (!obstacle.colided && obstacle.lane === car.lane &&
                     (obstacle.y + obstacle.image.height > car.y) &&
-                    (obstacle.y < car.y + carImage.height)) {
+                    (obstacle.y < car.y + car.height)) {
 
                     obstacle.colided = true;
 
                     if (obstacle.type === "wall") {
-                        playSound(resources.getSound("explosion"));
-                        obstacle.animationStart = t;
-                        obstacle.animation = "explosion";
+                        resources.playSound("explosion");
+                        obstacle.startAnimation(resources.getImage("explosion"));
                         lives--;
-                        car.speed = carStartSpeed;
+                        car.resetSpeed();
                     } else if (obstacle.type === "dirt") {
-                        car.speed = (carStartSpeed + car.speed) / 2;
+                        car.slowDown();
                     } else if (obstacle.type === "money") {
                         score += 50;
                     }
@@ -168,26 +132,11 @@ class App {
             }
         };
 
-        var drawObstacle = function (t: number, dt: number, obstacle: IObstacle): void {
+        var drawObstacle = function (t: number, dt: number, obstacle: Obstacle): void {
             obstacle.y += dt * car.speed;
+            obstacle.t = t;
 
-            if (obstacle.animation) {
-                var animDt = t - obstacle.animationStart;
-                var animFrame = animDt / 20;
-                if (animFrame >= 0 && animFrame < 25) {
-                    var animX = 64 * Math.floor(animFrame % 5);
-                    var animY = 64 * Math.floor(animFrame / 5);
-
-                    let animationImage = resources.getImage(obstacle.animation);
-                    display.context.drawImage(animationImage,
-                        animX, animY,
-                        64, 64,
-                        obstacle.x + obstacle.image.width / 2 - 32, obstacle.y + obstacle.image.height / 2 - 32,
-                        64, 64);
-                }
-            } else {
-                display.context.drawImage(obstacle.image, obstacle.x, obstacle.y);
-            }
+            obstacle.draw(display.context);
         };
 
         var createObstacle = function (): void {
@@ -203,72 +152,39 @@ class App {
                 type = "wall";
             }
 
-            var obstacleImage = resources.getImage(type);
-            var wallImage = resources.getImage("wall");
-            var obstacle = {
-                colided: false,
-                type: type,
-                x: laneToX(lane, wallImage.width),
-                y: -obstacleImage.height,
-                image: obstacleImage,
-                lane: lane
-            };
+            var obstacle = new Obstacle(type, resources.getImage(type));
+            obstacle.lane = lane;
+            obstacle.x = laneToX(lane, obstacle.width);
+            obstacle.y = -obstacle.height;
+
             obstacles.push(obstacle);
         };
 
         var drawRoad = function (dt: number): void {
-            var roadImage = resources.getImage("road");
 
-            roadY += dt * car.speed;
+            road.y += dt * car.speed;
 
-            roadY = roadY % roadImage.height;
-
-            var y = Math.round(roadY);
-
-            if (y > 0) {
-                display.context.drawImage(roadImage,
-                    0, roadImage.height - y,
-                    roadImage.width, y,
-                    (display.width - roadImage.width) / 2, 0,
-                    roadImage.width, y);
-            }
-
-            var i = 0;
-            while (true) {
-                var height = Math.min(roadImage.height, display.height - (y + i * roadImage.height));
-
-                if (height <= 0) break;
-
-                display.context.drawImage(roadImage,
-                    0, 0,
-                    roadImage.width, height,
-                    (display.width - roadImage.width) / 2, y + i * roadImage.height,
-                    roadImage.width, height);
-
-                i++;
-            }
+            road.draw(display.context);
         };
 
         var laneToX = function (lane: number, width: number): number {
-            var roadImage = resources.getImage("road");
-            return (display.width - roadImage.width / 2) / 2 - width / 2 + lane * roadImage.width / 2;
+            return (display.width * (0.5 + lane) - width) / 2;
         };
 
         function drawCar(dt: number): void {
-            let carImage = resources.getImage("car");
 
             if (input.laneChangeRequested >= 0) {
                 car.lane = input.laneChangeRequested;
             }
 
-            car.x = laneToX(car.lane, carImage.width);
-            car.y = display.height - carImage.height - 20;
+            car.x = laneToX(car.lane, car.width);
+            car.y = display.height - car.height - 20;
 
-            display.context.drawImage(carImage, car.x, car.y);
+            car.draw(display.context);
         }
 
         display = new Display();
-        setUpInput();
+        input = new Input(display.canvas);
         loadResources();
     }
 }
