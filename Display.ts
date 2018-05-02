@@ -20,12 +20,12 @@ export class Display {
         return this.context2d;
     }
 
-    public updateScore(score: string): void {
-        this.scoreEl.innerHTML = score;
+    public updateScore(score: number): void {
+        this.scoreEl.innerHTML = "" + score;
     }
 
-    public updateLives(lives: string): void {
-        this.livesEl.innerHTML = lives;
+    public updateLives(lives: number): void {
+        this.livesEl.innerHTML = "" + lives;
     }
 
     public clear(): void {

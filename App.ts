@@ -3,185 +3,183 @@ import { Input } from "./Input";
 import { Display } from "./Display";
 import { Road, Car, Obstacle, ObstacleType } from "./GameObjects";
 
-class App {
-    public start(): void {
-        var resources: Resources,
-            input: Input,
-            display: Display;
+class Game {
+    resources: Resources;
+    input: Input;
+    display: Display;
 
-        var score,
-            lives;
+    score: number;
+    lives: number;
 
-        var road: Road;
-        var car: Car;
-        var obstacles: Obstacle[] = [];
+    road: Road;
+    car: Car;
+    obstacles: Obstacle[] = [];
 
-        var lastFrameTime;
-        var obstacleMinY = 1000;
+    lastFrameTime: number;
+    obstacleMinY = 1000;
 
-        var startNewGame = function (): void {
-            score = 0;
-            lives = 3;
+    startNewGame(): void {
+        this.score = 0;
+        this.lives = 3;
 
-            road = new Road(resources.getImage("road"), display.height);
-            car = new Car(resources.getImage("car"));
+        this.road = new Road(this.resources.getImage("road"), this.display.height);
+        this.car = new Car(this.resources.getImage("car"));
 
-            lastFrameTime = null;
-            requestAnimationFrame(gameLoop);
-        };
+        this.lastFrameTime = null;
+        requestAnimationFrame((t) => this.gameLoop(t));
+    }
 
-        var loadResources = function (): void {
-            resources = new Resources(startNewGame);
-            resources.loadImage("car", "car.png");
-            resources.loadImage("road", "road.jpg");
-            resources.loadImage("wall", "wall.png");
-            resources.loadImage("dirt", "dirt.png");
-            resources.loadImage("money", "money.png");
-            resources.loadImage("explosion", "explosion.png");
-            resources.loadSound("explosion", "explosion.mp3");
-        };
+    gameLoop(t: number): void {
+        requestAnimationFrame((t) => this.gameLoop(t));
 
-        var gameLoop = function (t: number): void {
-            requestAnimationFrame(gameLoop);
+        if (!this.lastFrameTime) this.lastFrameTime = t;
 
-            if (!lastFrameTime) lastFrameTime = t;
+        var dt = t - this.lastFrameTime;
+        this.updateObjects(t, dt);
+        this.lastFrameTime = t;
 
-            var dt = t - lastFrameTime;
+        this.drawFrame();
+    }
 
-            updateObjects(t, dt);
+    updateObjects(t: number, dt: number): void {
+        this.road.y += dt * this.car.speed;
 
-            drawFrame();
+        if (this.input.laneChangeRequested >= 0) {
+            this.car.lane = this.input.laneChangeRequested;
+        }
+        this.car.x = this.laneToX(this.car.lane, this.car.width);
+        this.car.y = this.display.height - this.car.height - 20;
 
-            lastFrameTime = t;
-        };
+        for (var i = 0; i < this.obstacles.length; i++) {
+            var obstacle = this.obstacles[i];
+            obstacle.update(dt);
+            obstacle.y += dt * this.car.speed;
+        }
 
-        var updateObjects = function (t: number, dt: number): void {
-            road.y += dt * car.speed;
+        this.generateObstacles();
 
-            if (input.laneChangeRequested >= 0) {
-                car.lane = input.laneChangeRequested;
-            }
-            car.x = laneToX(car.lane, car.width);
-            car.y = display.height - car.height - 20;
+        this.checkCollisions();
 
-            for (var i = 0; i < obstacles.length; i++) {
-                var obstacle = obstacles[i];
-                obstacle.update(dt);
-                obstacle.y += dt * car.speed;
-            }
+        this.display.updateScore(this.score);
+        this.display.updateLives(this.lives);
 
-            generateObstacles();
-            checkCollisions();
+        if (this.lives <= 0) {
+            this.car.stop();
+        } else {
+            this.car.accelerate();
+        }
+    }
 
-            display.updateScore(score);
-            display.updateLives(lives);
+    drawFrame(): void {
+        this.display.clear();
 
-            if (lives <= 0) {
-                car.stop();
-            } else {
-                car.accelerate();
-            }
-        };
+        this.road.draw(this.display.context);
 
-        var drawFrame = function (): void {
+        for (var i = 0; i < this.obstacles.length; i++) {
+            var obstacle = this.obstacles[i];
+            obstacle.draw(this.display.context);
+        }
 
-            display.clear();
+        this.car.draw(this.display.context);
+    }
 
-            road.draw(display.context);
+    checkCollisions(): void {
+        for (var i = 0; i < this.obstacles.length; i++) {
+            var obstacle = this.obstacles[i];
 
-            for (var i = 0; i < obstacles.length; i++) {
-                var obstacle = obstacles[i];
-                obstacle.draw(display.context);
-            }
+            if (!obstacle.colided && obstacle.lane === this.car.lane &&
+                (obstacle.y + obstacle.image.height > this.car.y) &&
+                (obstacle.y < this.car.y + this.car.height)) {
 
-            car.draw(display.context);
-        };
+                obstacle.colided = true;
 
-        var checkCollisions = function (): void {
-            for (var i = 0; i < obstacles.length; i++) {
-                var obstacle = obstacles[i];
-
-                if (!obstacle.colided && obstacle.lane === car.lane &&
-                    (obstacle.y + obstacle.image.height > car.y) &&
-                    (obstacle.y < car.y + car.height)) {
-
-                    obstacle.colided = true;
-
-                    if (obstacle.type === ObstacleType.wall) {
-                        resources.playSound("explosion");
-                        obstacle.startAnimation(resources.getImage("explosion"));
-                        lives--;
-                        car.resetSpeed();
-                    } else if (obstacle.type === ObstacleType.dirt) {
-                        car.slowDown();
-                    } else if (obstacle.type === ObstacleType.money) {
-                        score += 50;
-                    }
+                if (obstacle.type === ObstacleType.wall) {
+                    this.resources.playSound("explosion");
+                    obstacle.startAnimation(this.resources.getImage("explosion"));
+                    this.lives--;
+                    this.car.resetSpeed();
+                } else if (obstacle.type === ObstacleType.dirt) {
+                    this.car.slowDown();
+                } else if (obstacle.type === ObstacleType.money) {
+                    this.score += 50;
                 }
             }
-        };
+        }
+    }
 
-        var generateObstacles = function (): void {
-            var random = Math.random() * 200;
+    generateObstacles(): void {
+        var random = Math.random() * 200;
 
-            if (random < obstacleMinY - car.height) {
-                createObstacle();
+        if (random < this.obstacleMinY - this.car.height) {
+            this.createObstacle();
+        }
+
+        this.obstacleMinY = 1000;
+
+        var toRemove = [];
+        for (var i = 0; i < this.obstacles.length; i++) {
+            var obstacle = this.obstacles[i];
+
+            this.obstacleMinY = Math.min(this.obstacleMinY, obstacle.y - obstacle.image.height);
+            if (obstacle.y > this.display.height) {
+                toRemove.push(i);
             }
+        }
 
-            obstacleMinY = 1000;
+        this.score += toRemove.length * 10;
 
-            var toRemove = [];
-            for (var i = 0; i < obstacles.length; i++) {
-                var obstacle = obstacles[i];
+        this.removeObstacles(toRemove);
+    }
 
-                obstacleMinY = Math.min(obstacleMinY, obstacle.y - obstacle.image.height);
-                if (obstacle.y > display.height) {
-                    toRemove.push(i);
-                }
-            }
+    removeObstacles(indexes: number[]): void {
+        indexes.reverse();
+        for (var i = 0; i < indexes.length; i++) {
+            this.obstacles.splice(i, 1);
+        }
+    }
 
-            score += toRemove.length * 10;
+    createObstacle(): void {
+        var lane = Math.random() > 0.5 ? 0 : 1;
 
-            removeObstacles(toRemove);
-        };
+        var type: ObstacleType;
+        var typeRandom = Math.random();
+        if (typeRandom < 0.1) {
+            type = ObstacleType.dirt;
+        } else if (typeRandom < 0.3) {
+            type = ObstacleType.money;
+        } else {
+            type = ObstacleType.wall;
+        }
 
-        var removeObstacles = function (indexes: number[]): void {
-            indexes.reverse();
-            for (var i = 0; i < indexes.length; i++) {
-                obstacles.splice(i, 1);
-            }
-        };
+        var obstacle = new Obstacle(type, this.resources.getImage(type));
+        obstacle.lane = lane;
+        obstacle.x = this.laneToX(lane, obstacle.width);
+        obstacle.y = -obstacle.height;
 
-        var createObstacle = function (): void {
-            var lane = Math.random() > 0.5 ? 0 : 1;
+        this.obstacles.push(obstacle);
+    }
 
-            var type: ObstacleType;
-            var typeRandom = Math.random();
-            if (typeRandom < 0.1) {
-                type = ObstacleType.dirt;
-            } else if (typeRandom < 0.3) {
-                type = ObstacleType.money;
-            } else {
-                type = ObstacleType.wall;
-            }
+    laneToX(lane: number, width: number): number {
+        return (this.display.width * (0.5 + lane) - width) / 2;
+    }
 
-            var obstacle = new Obstacle(type, resources.getImage(type));
-            obstacle.lane = lane;
-            obstacle.x = laneToX(lane, obstacle.width);
-            obstacle.y = -obstacle.height;
+    loadResources(): void {
+        this.resources = new Resources(() => this.startNewGame());
+        this.resources.loadImage("car", "car.png");
+        this.resources.loadImage("road", "road.jpg");
+        this.resources.loadImage("wall", "wall.png");
+        this.resources.loadImage("dirt", "dirt.png");
+        this.resources.loadImage("money", "money.png");
+        this.resources.loadImage("explosion", "explosion.png");
+        this.resources.loadSound("explosion", "explosion.mp3");
+    }
 
-            obstacles.push(obstacle);
-        };
-
-        var laneToX = function (lane: number, width: number): number {
-            return (display.width * (0.5 + lane) - width) / 2;
-        };
-
-        display = new Display();
-        input = new Input(display.canvas);
-        loadResources();
+    init(): void {
+        this.display = new Display();
+        this.input = new Input(this.display.canvas);
+        this.loadResources();
     }
 }
 
-var app = new App();
-app.start();
+var app = new Game();
+app.init();
