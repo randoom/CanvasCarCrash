@@ -136,19 +136,22 @@ export class Animation extends GameObject {
 }
 
 export class Obstacle extends GameObject {
-    colided: boolean = false;
-    type: ObstacleType;
+    isVisible: boolean = true;
+    hasColided: boolean = false;
     lane: number = 0;
 
     image: HTMLImageElement;
 
     animation: Animation | null = null;
 
-    constructor(type: ObstacleType, image: HTMLImageElement) {
+    onCollided: (o: Obstacle) => void = () => { };
+
+    constructor(image: HTMLImageElement, onCollided: (o: Obstacle) => void) {
         super();
 
-        this.type = type;
         this.image = image;
+        this.onCollided = onCollided;
+
         this.width = this.image.width;
         this.height = this.image.height;
     }
@@ -170,7 +173,7 @@ export class Obstacle extends GameObject {
     draw(context: CanvasRenderingContext2D): void {
         const spriteSize = 64;
 
-        if (!this.colided || this.type === ObstacleType.dirt) {
+        if (this.isVisible) {
             context.drawImage(this.image, this.x, this.y);
         }
 

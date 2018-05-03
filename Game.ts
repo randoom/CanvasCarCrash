@@ -109,27 +109,12 @@ class Game {
         for (var i = 0; i < this.obstacles.length; i++) {
             var obstacle = this.obstacles[i];
 
-            if (!obstacle.colided && obstacle.lane === this.car.lane &&
+            if (!obstacle.hasColided && obstacle.lane === this.car.lane &&
                 (obstacle.y + obstacle.image.height > this.car.y) &&
                 (obstacle.y < this.car.y + this.car.height)) {
 
-                obstacle.colided = true;
-
-                if (obstacle.type === ObstacleType.wall) {
-                    this.resources.playSound("explosion");
-                    obstacle.startAnimation(new Animation(this.resources.getImage("explosion"), 5, 5));
-                    this.lives--;
-                    if (this.lives > 0) {
-                        this.car.resetSpeed();
-                    } else {
-                        this.car.stop();
-                        this.menu.isVisible = true;
-                    }
-                } else if (obstacle.type === ObstacleType.dirt) {
-                    this.car.slowDown();
-                } else if (obstacle.type === ObstacleType.money) {
-                    this.score += 50;
-                }
+                obstacle.hasColided = true;
+                obstacle.onCollided(obstacle);
             }
         }
     }
@@ -166,19 +151,39 @@ class Game {
     }
 
     createObstacle(): void {
-        var lane = Math.random() > 0.5 ? 0 : 1;
-
-        var type: ObstacleType;
+        var image: HTMLImageElement;
+        var onCollided: (this: Game, o: Obstacle) => void;
         var typeRandom = Math.random();
         if (typeRandom < 0.1) {
-            type = ObstacleType.dirt;
+            image = this.resources.getImage("dirt");
+            onCollided = (o: Obstacle) => {
+                this.car.slowDown();
+            };
         } else if (typeRandom < 0.3) {
-            type = ObstacleType.money;
+            image = this.resources.getImage("money");
+            onCollided = (o: Obstacle) => {
+                o.isVisible = false;
+                this.score += 50;
+            };
         } else {
-            type = ObstacleType.wall;
+            image = this.resources.getImage("wall");
+            onCollided = (o: Obstacle) => {
+                o.isVisible = false;
+                this.resources.playSound("explosion");
+                o.startAnimation(new Animation(this.resources.getImage("explosion"), 5, 5));
+                this.lives--;
+                if (this.lives > 0) {
+                    this.car.resetSpeed();
+                } else {
+                    this.car.stop();
+                    this.menu.isVisible = true;
+                }
+            };
         }
 
-        var obstacle = new Obstacle(type, this.resources.getImage(type));
+        var lane = Math.random() > 0.5 ? 0 : 1;
+
+        var obstacle = new Obstacle(image, onCollided);
         obstacle.lane = lane;
         obstacle.x = this.laneToX(lane, obstacle.width);
         obstacle.y = -obstacle.height;
