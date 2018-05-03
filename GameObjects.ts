@@ -183,3 +183,19 @@ export class Obstacle extends GameObject {
         }
     }
 }
+
+export class Menu extends GameObject {
+    isVisible: boolean = false;
+
+    draw(context: CanvasRenderingContext2D): void {
+        if (!this.isVisible) return;
+
+        var menuItemText = "New Game";
+        context.font = "30px Arial";
+        context.fillStyle = "#f00";
+        context.textAlign = "center";
+        context.strokeStyle = "#fff";
+        context.fillText(menuItemText, this.x, this.y);
+        context.strokeText(menuItemText, this.x, this.y);
+    }
+}

@@ -1,7 +1,7 @@
-﻿import { Resources } from "./Resources";
+import { Resources } from "./Resources";
 import { Input } from "./Input";
 import { Display } from "./Display";
-import { Road, Car, Obstacle, ObstacleType, Animation } from "./GameObjects";
+import { Road, Car, Obstacle, ObstacleType, Animation, Menu } from "./GameObjects";
 
 class Game {
     resources: Resources;
@@ -11,6 +11,7 @@ class Game {
     score: number = 0;
     lives: number = 0;
 
+    menu: Menu;
     road: Road;
     car: Car;
     obstacles: Obstacle[] = [];
@@ -22,16 +23,25 @@ class Game {
         this.resources = resources;
         this.display = new Display();
         this.input = new Input(this.display.canvas);
+
+        this.menu = new Menu();
+        this.menu.x = this.display.width / 2;
+        this.menu.y = this.display.height / 2;
+
         this.road = new Road(this.resources.getImage("road"), this.display.height);
         this.car = new Car(this.resources.getImage("car"));
     }
 
-    start(): void {
+    startNewGame(): void {
         this.score = 0;
         this.lives = 3;
 
+        this.car.resetSpeed();
+        this.car.lane = 0;
+
+        this.obstacles = [];
+
         this.lastFrameTime = null;
-        requestAnimationFrame((t) => this.gameLoop(t));
     }
 
     gameLoop(t: number): void {
@@ -62,6 +72,11 @@ class Game {
             this.car.x = this.laneToX(this.car.lane, this.car.width);
             this.car.y = this.display.height - this.car.height - 20;
             this.car.accelerate();
+        } else {
+            if (this.input.laneChangeRequested >= 0) {
+                this.startNewGame();
+                this.menu.isVisible = false;
+            }
         }
 
         this.road.y += dt * this.car.speed;
@@ -86,6 +101,8 @@ class Game {
         }
 
         this.car.draw(this.display.context);
+
+        this.menu.draw(this.display.context);
     }
 
     checkCollisions(): void {
@@ -106,6 +123,7 @@ class Game {
                         this.car.resetSpeed();
                     } else {
                         this.car.stop();
+                        this.menu.isVisible = true;
                     }
                 } else if (obstacle.type === ObstacleType.dirt) {
                     this.car.slowDown();
@@ -185,7 +203,8 @@ class Game {
     static init(): void {
         var resources = new Resources(() => {
             var game = new Game(resources);
-            game.start();
+            game.startNewGame();
+            requestAnimationFrame((t) => game.gameLoop(t));
         });
         this.loadResources(resources);
     }
