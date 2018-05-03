@@ -1,7 +1,7 @@
 ﻿import { Resources } from "./Resources";
 import { Input } from "./Input";
 import { Display } from "./Display";
-import { Road, Car, Obstacle, ObstacleType } from "./GameObjects";
+import { Road, Car, Obstacle, ObstacleType, Animation } from "./GameObjects";
 
 class Game {
     resources: Resources;
@@ -100,7 +100,7 @@ class Game {
 
                 if (obstacle.type === ObstacleType.wall) {
                     this.resources.playSound("explosion");
-                    obstacle.startAnimation(this.resources.getImage("explosion"));
+                    obstacle.startAnimation(new Animation(this.resources.getImage("explosion"), 5, 5));
                     this.lives--;
                     this.car.resetSpeed();
                 } else if (obstacle.type === ObstacleType.dirt) {

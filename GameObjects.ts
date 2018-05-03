@@ -91,6 +91,50 @@ export class Car extends GameObject {
     }
 }
 
+export class Animation extends GameObject {
+    private readonly image: HTMLImageElement;
+    private readonly rowCount: number;
+    private readonly colCount: number;
+
+    private elapsed = 0;
+    private currentFrame = 0;
+
+    public isAnimating = true;
+
+    constructor(image: HTMLImageElement, rowCount: number, colCount: number) {
+        super();
+
+        this.image = image;
+        this.rowCount = rowCount;
+        this.colCount = colCount;
+
+        this.width = this.image.width / this.colCount;
+        this.height = this.image.height / this.rowCount;
+    }
+
+    update(dt: number): void {
+        this.elapsed += dt;
+
+        this.currentFrame = this.elapsed / 20;
+        if (this.currentFrame < 0 && this.currentFrame >= this.rowCount * this.colCount) {
+            this.isAnimating = false;
+        }
+    }
+
+    draw(context: CanvasRenderingContext2D): void {
+        if (!this.isAnimating) return;
+
+        var animX = this.width * Math.floor(this.currentFrame % 5);
+        var animY = this.height * Math.floor(this.currentFrame / 5);
+
+        context.drawImage(this.image,
+            animX, animY,
+            this.width, this.height,
+            this.x - this.width / 2, this.y - this.height / 2,
+            this.width, this.height);
+    }
+}
+
 export class Obstacle extends GameObject {
     colided: boolean = false;
     type: ObstacleType;
@@ -98,8 +142,7 @@ export class Obstacle extends GameObject {
 
     image: HTMLImageElement;
 
-    private animationImage: HTMLImageElement | null = null;
-    private animationElapsed: number = 0;
+    animation: Animation | null = null;
 
     constructor(type: ObstacleType, image: HTMLImageElement) {
         super();
@@ -110,14 +153,17 @@ export class Obstacle extends GameObject {
         this.height = this.image.height;
     }
 
-    startAnimation(animationImage: HTMLImageElement): void {
-        this.animationImage = animationImage;
-        this.animationElapsed = 0;
+    startAnimation(animation: Animation): void {
+        this.animation = animation;
+        this.animation.x = this.x + this.width / 2;
+        this.animation.y = this.y + this.height / 2;
     }
 
     update(dt: number): void {
-        if (this.animationImage) {
-            this.animationElapsed += dt;
+        if (this.animation) {
+            this.animation.update(dt);
+            this.animation.x = this.x + this.width / 2;
+            this.animation.y = this.y + this.height / 2;
         }
     }
 
@@ -128,19 +174,11 @@ export class Obstacle extends GameObject {
             context.drawImage(this.image, this.x, this.y);
         }
 
-        if (this.animationImage) {
-            var animFrame = this.animationElapsed / 20;
-            if (animFrame >= 0 && animFrame < 25) {
-                var animX = spriteSize * Math.floor(animFrame % 5);
-                var animY = spriteSize * Math.floor(animFrame / 5);
-
-                context.drawImage(this.animationImage,
-                    animX, animY,
-                    spriteSize, spriteSize,
-                    this.x + (this.width - spriteSize) / 2, this.y + (this.height - spriteSize) / 2,
-                    spriteSize, spriteSize);
+        if (this.animation) {
+            if (this.animation.isAnimating) {
+                this.animation.draw(context);
             } else {
-                this.animationImage = null;
+                this.animation = null;
             }
         }
     }
