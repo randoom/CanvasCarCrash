@@ -1,5 +1,5 @@
 import { Resources } from "./Resources";
-import { Input } from "./Input";
+import { Input, KeyCodes } from "./Input";
 import { Display } from "./Display";
 import { Road, Car, Obstacle, ObstacleType, Animation, Menu } from "./GameObjects";
 
@@ -73,7 +73,7 @@ class Game {
             this.car.y = this.display.height - this.car.height - 20;
             this.car.accelerate();
         } else {
-            if (this.input.laneChangeRequested >= 0) {
+            if (this.input.isKeyDown(KeyCodes.enter)) {
                 this.startNewGame();
                 this.menu.isVisible = false;
             }
