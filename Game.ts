@@ -38,22 +38,33 @@ class Game {
         requestAnimationFrame((t) => this.gameLoop(t));
 
         if (!this.lastFrameTime) this.lastFrameTime = t;
-
         var dt = t - this.lastFrameTime;
+
         this.updateObjects(t, dt);
-        this.lastFrameTime = t;
+        this.checkCollisions();
 
         this.drawFrame();
+        this.updateHUD();
+
+        this.lastFrameTime = t;
+    }
+
+    updateHUD(): void {
+        this.display.updateScore(this.score);
+        this.display.updateLives(this.lives);
     }
 
     updateObjects(t: number, dt: number): void {
-        this.road.y += dt * this.car.speed;
-
-        if (this.input.laneChangeRequested >= 0) {
-            this.car.lane = this.input.laneChangeRequested;
+        if (this.lives > 0) {
+            if (this.input.laneChangeRequested >= 0) {
+                this.car.lane = this.input.laneChangeRequested;
+            }
+            this.car.x = this.laneToX(this.car.lane, this.car.width);
+            this.car.y = this.display.height - this.car.height - 20;
+            this.car.accelerate();
         }
-        this.car.x = this.laneToX(this.car.lane, this.car.width);
-        this.car.y = this.display.height - this.car.height - 20;
+
+        this.road.y += dt * this.car.speed;
 
         for (var i = 0; i < this.obstacles.length; i++) {
             var obstacle = this.obstacles[i];
@@ -62,17 +73,6 @@ class Game {
         }
 
         this.generateObstacles();
-
-        this.checkCollisions();
-
-        this.display.updateScore(this.score);
-        this.display.updateLives(this.lives);
-
-        if (this.lives <= 0) {
-            this.car.stop();
-        } else {
-            this.car.accelerate();
-        }
     }
 
     drawFrame(): void {
@@ -102,7 +102,11 @@ class Game {
                     this.resources.playSound("explosion");
                     obstacle.startAnimation(new Animation(this.resources.getImage("explosion"), 5, 5));
                     this.lives--;
-                    this.car.resetSpeed();
+                    if (this.lives > 0) {
+                        this.car.resetSpeed();
+                    } else {
+                        this.car.stop();
+                    }
                 } else if (obstacle.type === ObstacleType.dirt) {
                     this.car.slowDown();
                 } else if (obstacle.type === ObstacleType.money) {
