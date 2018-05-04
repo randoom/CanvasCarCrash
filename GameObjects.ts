@@ -140,19 +140,23 @@ export class Obstacle extends GameObject {
     hasColided: boolean = false;
     lane: number = 0;
 
-    image: HTMLImageElement;
+    image: HTMLImageElement | null = null;
 
     animation: Animation | null = null;
 
     // tslint:disable-next-line no-empty
     onCollided: (o: Obstacle) => void = () => { };
 
-    constructor(image: HTMLImageElement, onCollided: (o: Obstacle) => void) {
-        super();
+    reset(): void {
+        this.x = 0;
+        this.y = 0;
+        this.isVisible = true;
+        this.hasColided = false;
+        this.animation = null;
+    }
 
+    setImage(image: HTMLImageElement): void {
         this.image = image;
-        this.onCollided = onCollided;
-
         this.width = this.image.width;
         this.height = this.image.height;
     }
@@ -173,7 +177,7 @@ export class Obstacle extends GameObject {
     draw(context: CanvasRenderingContext2D): void {
         const spriteSize = 64;
 
-        if (this.isVisible) {
+        if (this.isVisible && this.image) {
             context.drawImage(this.image, this.x, this.y);
         }
 

@@ -3,6 +3,18 @@ import { Input, KeyCodes } from "./Input";
 import { Display } from "./Display";
 import { Road, Car, Obstacle, ObstacleType, Animation, Menu } from "./GameObjects";
 
+class ObjectPool {
+    static obstacles: Obstacle[] = [];
+
+    static getObstacle(): Obstacle {
+        return this.obstacles.pop() || new Obstacle();
+    }
+
+    static releaseObstacle(obstacle: Obstacle): void {
+        this.obstacles.push(obstacle);
+    }
+}
+
 class Game {
     resources: Resources;
     input: Input;
@@ -110,7 +122,7 @@ class Game {
             var obstacle = this.obstacles[i];
 
             if (!obstacle.hasColided && obstacle.lane === this.car.lane &&
-                (obstacle.y + obstacle.image.height > this.car.y) &&
+                (obstacle.y + obstacle.height > this.car.y) &&
                 (obstacle.y < this.car.y + this.car.height)) {
 
                 obstacle.hasColided = true;
@@ -132,7 +144,7 @@ class Game {
         for (var i = 0; i < this.obstacles.length; i++) {
             var obstacle = this.obstacles[i];
 
-            this.obstacleMinY = Math.min(this.obstacleMinY, obstacle.y - obstacle.image.height);
+            this.obstacleMinY = Math.min(this.obstacleMinY, obstacle.y - obstacle.height);
             if (obstacle.y > this.display.height) {
                 toRemove.push(i);
             }
@@ -146,7 +158,8 @@ class Game {
     removeObstacles(indexes: number[]): void {
         indexes.reverse();
         for (var i = 0; i < indexes.length; i++) {
-            this.obstacles.splice(i, 1);
+            var obstacle = this.obstacles.splice(i, 1)[0];
+            ObjectPool.releaseObstacle(obstacle);
         }
     }
 
@@ -183,7 +196,10 @@ class Game {
 
         var lane = Math.random() > 0.5 ? 0 : 1;
 
-        var obstacle = new Obstacle(image, onCollided);
+        var obstacle = ObjectPool.getObstacle();
+        obstacle.reset();
+        obstacle.setImage(image);
+        obstacle.onCollided = onCollided;
         obstacle.lane = lane;
         obstacle.x = this.laneToX(lane, obstacle.width);
         obstacle.y = -obstacle.height;
