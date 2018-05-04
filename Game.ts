@@ -1,7 +1,7 @@
 import { Resources } from "./Resources";
 import { Input, KeyCodes } from "./Input";
 import { Display } from "./Display";
-import { Road, Car, Obstacle, ObstacleType, Animation, Menu } from "./GameObjects";
+import { Road, Car, Obstacle, ObstacleType, Animation, Hud, Menu } from "./GameObjects";
 
 class ObjectPool {
     static obstacles: Obstacle[] = [];
@@ -37,10 +37,8 @@ class Game {
     input: Input;
     display: Display;
 
-    score: number = 0;
-    lives: number = 0;
-
     menu: Menu;
+    hud: Hud;
     road: Road;
     car: Car;
     obstacles: Obstacle[] = [];
@@ -57,13 +55,18 @@ class Game {
         this.menu.x = this.display.width / 2;
         this.menu.y = this.display.height / 2;
 
-        this.road = new Road(this.resources.getImage("road"), this.display.height);
+        this.hud = new Hud();
+        this.hud.width = this.display.width;
+        this.hud.height = 20;
+
+        this.road = new Road(this.resources.getImage("road"), this.display.height - this.hud.height);
+        this.road.y = this.hud.height;
         this.car = new Car(this.resources.getImage("car"));
     }
 
     startNewGame(): void {
-        this.score = 0;
-        this.lives = 3;
+        this.hud.score = 0;
+        this.hud.lives = 3;
 
         this.car.resetSpeed();
         this.car.lane = 0;
@@ -83,23 +86,17 @@ class Game {
         this.checkCollisions();
 
         this.drawFrame();
-        this.updateHUD();
 
         this.lastFrameTime = t;
     }
 
-    updateHUD(): void {
-        this.display.updateScore(this.score);
-        this.display.updateLives(this.lives);
-    }
-
     updateObjects(t: number, dt: number): void {
-        if (this.lives > 0) {
+        if (this.hud.lives > 0) {
             if (this.input.laneChangeRequested >= 0) {
                 this.car.lane = this.input.laneChangeRequested;
             }
             this.car.x = this.laneToX(this.car.lane, this.car.width);
-            this.car.y = this.display.height - this.car.height - 20;
+            this.car.y = this.road.y + this.road.height - this.car.height * 1.25;
             this.car.accelerate();
         } else {
             if (this.input.isKeyDown(KeyCodes.enter)) {
@@ -108,7 +105,7 @@ class Game {
             }
         }
 
-        this.road.y += dt * this.car.speed;
+        this.road.distance += dt * this.car.speed;
 
         for (var i = 0; i < this.obstacles.length; i++) {
             var obstacle = this.obstacles[i];
@@ -122,6 +119,10 @@ class Game {
     drawFrame(): void {
         this.display.clear();
 
+        this.display.context.save();
+        this.display.context.rect(this.road.x, this.road.y, this.road.width, this.road.height);
+        this.display.context.clip();
+
         this.road.draw(this.display.context);
 
         for (var i = 0; i < this.obstacles.length; i++) {
@@ -132,6 +133,10 @@ class Game {
         this.car.draw(this.display.context);
 
         this.menu.draw(this.display.context);
+
+        this.display.context.restore();
+
+        this.hud.draw(this.display.context);
     }
 
     checkCollisions(): void {
@@ -162,12 +167,12 @@ class Game {
             var obstacle = this.obstacles[i];
 
             this.obstacleMinY = Math.min(this.obstacleMinY, obstacle.y - obstacle.height);
-            if (obstacle.y > this.display.height) {
+            if (obstacle.y > this.road.y + this.road.height) {
                 toRemove.push(i);
             }
         }
 
-        this.score += toRemove.length * 10;
+        this.hud.score += toRemove.length * 10;
 
         this.removeObstacles(toRemove);
     }
@@ -193,7 +198,7 @@ class Game {
             image = this.resources.getImage("money");
             onCollided = (o: Obstacle) => {
                 o.isVisible = false;
-                this.score += 50;
+                this.hud.score += 50;
             };
         } else {
             image = this.resources.getImage("wall");
@@ -205,8 +210,8 @@ class Game {
                 animation.setImage(this.resources.getImage("explosion"), 5, 5);
                 o.startAnimation(animation);
 
-                this.lives--;
-                if (this.lives > 0) {
+                this.hud.lives--;
+                if (this.hud.lives > 0) {
                     this.car.resetSpeed();
                 } else {
                     this.car.stop();
@@ -223,13 +228,13 @@ class Game {
         obstacle.onCollided = onCollided;
         obstacle.lane = lane;
         obstacle.x = this.laneToX(lane, obstacle.width);
-        obstacle.y = -obstacle.height;
+        obstacle.y = this.road.y - obstacle.height;
 
         this.obstacles.push(obstacle);
     }
 
     laneToX(lane: number, width: number): number {
-        return (this.display.width * (0.5 + lane) - width) / 2;
+        return (this.road.width * (0.5 + lane) - width) / 2;
     }
 
     static loadResources(resources: Resources): void {

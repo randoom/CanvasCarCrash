@@ -33,6 +33,8 @@ const carAcceleration = 0.00075;
 export class Road extends GameObject {
     private image: HTMLImageElement;
 
+    public distance = 0;
+
     constructor(image: HTMLImageElement, height: number) {
         super();
 
@@ -42,26 +44,26 @@ export class Road extends GameObject {
     }
 
     draw(context: CanvasRenderingContext2D): void {
-        this.y = this.y % this.image.height;
+        this.distance = this.distance % this.image.height;
 
-        if (this.y > 0) {
+        if (this.distance > 0) {
             context.drawImage(this.image,
-                0, this.image.height - this.y,
-                this.image.width, this.y,
-                this.x, 0,
-                this.image.width, this.y);
+                0, this.image.height - this.distance,
+                this.image.width, this.distance,
+                this.x, this.y,
+                this.image.width, this.distance);
         }
 
         var i = 0;
         while (true) {
-            var height = Math.min(this.image.height, this.height - (this.y + i * this.image.height));
+            var height = Math.min(this.image.height, this.height - (this.distance + i * this.image.height));
 
             if (height <= 0) break;
 
             context.drawImage(this.image,
                 0, 0,
                 this.image.width, height,
-                this.x, this.y + i * this.image.height,
+                this.x, this.y + this.distance + i * this.image.height,
                 this.image.width, height);
 
             i++;
@@ -224,5 +226,23 @@ export class Menu extends GameObject {
         context.strokeStyle = "#fff";
         context.fillText(menuItemText, this.x, this.y);
         context.strokeText(menuItemText, this.x, this.y);
+    }
+}
+
+export class Hud extends GameObject {
+    public score = 0;
+    public lives = 0;
+
+    draw(context: CanvasRenderingContext2D): void {
+        context.font = "bold 14px Arial";
+        context.fillStyle = "#000";
+        context.textBaseline = "bottom";
+        context.strokeStyle = "#000";
+
+        context.textAlign = "left";
+        context.fillText("Score: " + this.score, this.x, this.y + this.height);
+
+        context.textAlign = "right";
+        context.fillText("Cars: " + this.lives, this.x + this.width, this.y + this.height);
     }
 }

@@ -27,10 +27,9 @@ export class Resources {
 
     public playSound(name: string): void {
         let sound = this.sounds[name];
-        if (sound.canPlayType("audio/mp3") === "") return;
-        if (navigator.userAgent.indexOf("hpwOS") >= 0) return;
 
-        sound.play();
+        // tslint:disable-next-line no-empty
+        try { sound.play(); } catch (e) { }
     }
 
     private onResourceLoaded(): void {
