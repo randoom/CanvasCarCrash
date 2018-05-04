@@ -10,7 +10,20 @@ abstract class GameObject {
     width: number = 0;
     height: number = 0;
 
-    public abstract draw(context: CanvasRenderingContext2D): void;
+    isDisposed = false;
+
+    abstract draw(context: CanvasRenderingContext2D): void;
+
+    reset(): void {
+        this.x = 0;
+        this.y = 0;
+        this.width = 0;
+        this.height = 0;
+        this.isDisposed = false;
+    }
+
+    // tslint:disable-next-line no-empty
+    dispose: () => void = () => { };
 }
 
 const carStartSpeed = 0.4;
@@ -92,18 +105,16 @@ export class Car extends GameObject {
 }
 
 export class Animation extends GameObject {
-    private readonly image: HTMLImageElement;
-    private readonly rowCount: number;
-    private readonly colCount: number;
+    private image: HTMLImageElement | null = null;
+    private rowCount: number = 1;
+    private colCount: number = 1;
 
     private elapsed = 0;
     private currentFrame = 0;
 
     public isAnimating = true;
 
-    constructor(image: HTMLImageElement, rowCount: number, colCount: number) {
-        super();
-
+    setImage(image: HTMLImageElement, rowCount: number, colCount: number): void {
         this.image = image;
         this.rowCount = rowCount;
         this.colCount = colCount;
@@ -112,17 +123,25 @@ export class Animation extends GameObject {
         this.height = this.image.height / this.rowCount;
     }
 
+    reset(): void {
+        super.reset();
+
+        this.elapsed = 0;
+        this.currentFrame = 0;
+        this.isAnimating = true;
+    }
+
     update(dt: number): void {
         this.elapsed += dt;
 
         this.currentFrame = this.elapsed / 20;
-        if (this.currentFrame < 0 && this.currentFrame >= this.rowCount * this.colCount) {
+        if (this.currentFrame < 0 || this.currentFrame >= this.rowCount * this.colCount) {
             this.isAnimating = false;
         }
     }
 
     draw(context: CanvasRenderingContext2D): void {
-        if (!this.isAnimating) return;
+        if (!this.isAnimating || !this.image) return;
 
         var animX = this.width * Math.floor(this.currentFrame % 5);
         var animY = this.height * Math.floor(this.currentFrame / 5);
@@ -148,8 +167,8 @@ export class Obstacle extends GameObject {
     onCollided: (o: Obstacle) => void = () => { };
 
     reset(): void {
-        this.x = 0;
-        this.y = 0;
+        super.reset();
+
         this.isVisible = true;
         this.hasColided = false;
         this.animation = null;
@@ -171,6 +190,11 @@ export class Obstacle extends GameObject {
             this.animation.update(dt);
             this.animation.x = this.x + this.width / 2;
             this.animation.y = this.y + this.height / 2;
+
+            if (!this.animation.isAnimating) {
+                this.animation.dispose();
+                this.animation = null;
+            }
         }
     }
 
@@ -182,11 +206,7 @@ export class Obstacle extends GameObject {
         }
 
         if (this.animation) {
-            if (this.animation.isAnimating) {
-                this.animation.draw(context);
-            } else {
-                this.animation = null;
-            }
+            this.animation.draw(context);
         }
     }
 }

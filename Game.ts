@@ -5,13 +5,30 @@ import { Road, Car, Obstacle, ObstacleType, Animation, Menu } from "./GameObject
 
 class ObjectPool {
     static obstacles: Obstacle[] = [];
+    static animations: Animation[] = [];
 
     static getObstacle(): Obstacle {
-        return this.obstacles.pop() || new Obstacle();
+        var obstacle = this.obstacles.pop() || new Obstacle();
+        obstacle.reset();
+        obstacle.dispose = () => { ObjectPool.releaseObstacle(obstacle); };
+        return obstacle;
     }
 
-    static releaseObstacle(obstacle: Obstacle): void {
+    private static releaseObstacle(obstacle: Obstacle): void {
         this.obstacles.push(obstacle);
+    }
+
+    static getAnimation(): Animation {
+        var animation = this.animations.pop() || new Animation();
+        animation.reset();
+        animation.dispose = () => {
+            ObjectPool.releaseAnimation(animation);
+        };
+        return animation;
+    }
+
+    private static releaseAnimation(animation: Animation): void {
+        this.animations.push(animation);
     }
 }
 
@@ -159,7 +176,7 @@ class Game {
         indexes.reverse();
         for (var i = 0; i < indexes.length; i++) {
             var obstacle = this.obstacles.splice(i, 1)[0];
-            ObjectPool.releaseObstacle(obstacle);
+            obstacle.dispose();
         }
     }
 
@@ -183,7 +200,11 @@ class Game {
             onCollided = (o: Obstacle) => {
                 o.isVisible = false;
                 this.resources.playSound("explosion");
-                o.startAnimation(new Animation(this.resources.getImage("explosion"), 5, 5));
+
+                var animation = ObjectPool.getAnimation();
+                animation.setImage(this.resources.getImage("explosion"), 5, 5);
+                o.startAnimation(animation);
+
                 this.lives--;
                 if (this.lives > 0) {
                     this.car.resetSpeed();
