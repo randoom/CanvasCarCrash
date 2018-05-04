@@ -92,6 +92,7 @@ class Game {
         this.display.clear();
 
         this.display.context.save();
+        this.display.context.beginPath();
         this.display.context.rect(this.road.x, this.road.y, this.road.width, this.road.height);
         this.display.context.clip();
 
@@ -128,7 +129,7 @@ class Game {
     generateObstacles(): void {
         var random = Math.random() * 200;
 
-        if (random < this.obstacleMinY - this.car.height) { 
+        if (random < this.obstacleMinY - this.car.height) {
             this.createObstacle();
         }
 
