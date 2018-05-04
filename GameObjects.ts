@@ -1,3 +1,5 @@
+import { IPoolable } from "./ObjectPool";
+
 export enum ObstacleType {
     wall = "wall",
     money = "money",
@@ -10,20 +12,7 @@ abstract class GameObject {
     width: number = 0;
     height: number = 0;
 
-    isDisposed = false;
-
     abstract draw(context: CanvasRenderingContext2D): void;
-
-    reset(): void {
-        this.x = 0;
-        this.y = 0;
-        this.width = 0;
-        this.height = 0;
-        this.isDisposed = false;
-    }
-
-    // tslint:disable-next-line no-empty
-    dispose: () => void = () => { };
 }
 
 const carStartSpeed = 0.4;
@@ -106,7 +95,7 @@ export class Car extends GameObject {
     }
 }
 
-export class Animation extends GameObject {
+export class Animation extends GameObject implements IPoolable {
     private image: HTMLImageElement | null = null;
     private rowCount: number = 1;
     private colCount: number = 1;
@@ -123,14 +112,6 @@ export class Animation extends GameObject {
 
         this.width = this.image.width / this.colCount;
         this.height = this.image.height / this.rowCount;
-    }
-
-    reset(): void {
-        super.reset();
-
-        this.elapsed = 0;
-        this.currentFrame = 0;
-        this.isAnimating = true;
     }
 
     update(dt: number): void {
@@ -154,9 +135,19 @@ export class Animation extends GameObject {
             this.x - this.width / 2, this.y - this.height / 2,
             this.width, this.height);
     }
+
+    release(): void {
+        throw new Error("Method not implemented.");
+    }
+
+    reset(): void {
+        this.elapsed = 0;
+        this.currentFrame = 0;
+        this.isAnimating = true;
+    }
 }
 
-export class Obstacle extends GameObject {
+export class Obstacle extends GameObject implements IPoolable {
     isVisible: boolean = true;
     hasColided: boolean = false;
     lane: number = 0;
@@ -168,14 +159,6 @@ export class Obstacle extends GameObject {
     // tslint:disable-next-line no-empty
     onCollided: (o: Obstacle) => void = () => { };
 
-    reset(): void {
-        super.reset();
-
-        this.isVisible = true;
-        this.hasColided = false;
-        this.animation = null;
-    }
-
     setImage(image: HTMLImageElement): void {
         this.image = image;
         this.width = this.image.width;
@@ -183,6 +166,8 @@ export class Obstacle extends GameObject {
     }
 
     startAnimation(animation: Animation): void {
+        if (this.animation) animation.release();
+
         this.animation = animation;
         this.update(0);
     }
@@ -194,7 +179,7 @@ export class Obstacle extends GameObject {
             this.animation.y = this.y + this.height / 2;
 
             if (!this.animation.isAnimating) {
-                this.animation.dispose();
+                this.animation.release();
                 this.animation = null;
             }
         }
@@ -210,6 +195,15 @@ export class Obstacle extends GameObject {
         if (this.animation) {
             this.animation.draw(context);
         }
+    }
+
+    release(): void {
+        throw new Error("Method not implemented.");
+    }
+
+    reset(): void {
+        this.isVisible = true;
+        this.hasColided = false;
     }
 }
 

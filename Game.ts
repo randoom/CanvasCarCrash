@@ -1,36 +1,8 @@
 import { Resources } from "./Resources";
 import { Input, KeyCodes } from "./Input";
 import { Display } from "./Display";
+import { ObjectPool } from "./ObjectPool";
 import { Road, Car, Obstacle, ObstacleType, Animation, Hud, Menu } from "./GameObjects";
-
-class ObjectPool {
-    static obstacles: Obstacle[] = [];
-    static animations: Animation[] = [];
-
-    static getObstacle(): Obstacle {
-        var obstacle = this.obstacles.pop() || new Obstacle();
-        obstacle.reset();
-        obstacle.dispose = () => { ObjectPool.releaseObstacle(obstacle); };
-        return obstacle;
-    }
-
-    private static releaseObstacle(obstacle: Obstacle): void {
-        this.obstacles.push(obstacle);
-    }
-
-    static getAnimation(): Animation {
-        var animation = this.animations.pop() || new Animation();
-        animation.reset();
-        animation.dispose = () => {
-            ObjectPool.releaseAnimation(animation);
-        };
-        return animation;
-    }
-
-    private static releaseAnimation(animation: Animation): void {
-        this.animations.push(animation);
-    }
-}
 
 class Game {
     resources: Resources;
@@ -156,7 +128,7 @@ class Game {
     generateObstacles(): void {
         var random = Math.random() * 200;
 
-        if (random < this.obstacleMinY - this.car.height) {
+        if (random < this.obstacleMinY - this.car.height) { 
             this.createObstacle();
         }
 
@@ -181,7 +153,7 @@ class Game {
         indexes.reverse();
         for (var i = 0; i < indexes.length; i++) {
             var obstacle = this.obstacles.splice(indexes[i], 1)[0];
-            obstacle.dispose();
+            obstacle.release();
         }
     }
 
@@ -206,7 +178,7 @@ class Game {
                 o.isVisible = false;
                 this.resources.playSound("explosion");
 
-                var animation = ObjectPool.getAnimation();
+                var animation = ObjectPool.get(Animation);
                 animation.setImage(this.resources.getImage("explosion"), 5, 5);
                 o.startAnimation(animation);
 
@@ -222,7 +194,7 @@ class Game {
 
         var lane = Math.random() > 0.5 ? 0 : 1;
 
-        var obstacle = ObjectPool.getObstacle();
+        var obstacle = ObjectPool.get(Obstacle);
         obstacle.reset();
         obstacle.setImage(image);
         obstacle.onCollided = onCollided;
