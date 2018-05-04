@@ -5,9 +5,10 @@ export class Display {
     constructor() {
         var temp: any;
 
-        temp = document.getElementById("canvas");
-        if (!temp) throw "Canvas element not found";
-        this.canvasEl = <HTMLCanvasElement>temp;
+        this.canvasEl = document.createElement("canvas");
+        this.canvas.width = 400;
+        this.canvas.height = 600;
+        document.body.appendChild(this.canvasEl);
 
         temp = this.canvasEl.getContext("2d");
         if (!temp) throw "Can't get 2D context of canvas";
