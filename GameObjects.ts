@@ -144,6 +144,7 @@ export class Obstacle extends GameObject {
 
     animation: Animation | null = null;
 
+    // tslint:disable-next-line no-empty
     onCollided: (o: Obstacle) => void = () => { };
 
     constructor(image: HTMLImageElement, onCollided: (o: Obstacle) => void) {
@@ -158,8 +159,7 @@ export class Obstacle extends GameObject {
 
     startAnimation(animation: Animation): void {
         this.animation = animation;
-        this.animation.x = this.x + this.width / 2;
-        this.animation.y = this.y + this.height / 2;
+        this.update(0);
     }
 
     update(dt: number): void {
