@@ -175,7 +175,7 @@ class Game {
     removeObstacles(indexes: number[]): void {
         indexes.reverse();
         for (var i = 0; i < indexes.length; i++) {
-            var obstacle = this.obstacles.splice(i, 1)[0];
+            var obstacle = this.obstacles.splice(indexes[i], 1)[0];
             obstacle.dispose();
         }
     }
