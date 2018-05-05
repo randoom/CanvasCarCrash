@@ -48,8 +48,10 @@ class Game {
         this.lastFrameTime = null;
     }
 
+    bindedGameLoop: (t: number) => void = this.gameLoop.bind(this);
+
     gameLoop(t: number): void {
-        requestAnimationFrame((t) => this.gameLoop(t));
+        requestAnimationFrame(this.bindedGameLoop);
 
         if (!this.lastFrameTime) this.lastFrameTime = t;
         let dt = t - this.lastFrameTime;
@@ -121,7 +123,7 @@ class Game {
                 (obstacle.y < this.car.y + this.car.height)) {
 
                 obstacle.hasColided = true;
-                obstacle.onCollided(obstacle);
+                obstacle.onCollided(this, obstacle);
             }
         }
     }
@@ -160,37 +162,17 @@ class Game {
 
     createObstacle(): void {
         let image: HTMLImageElement;
-        let onCollided: (this: Game, o: Obstacle) => void;
+        let onCollided: (g: Game, o: Obstacle) => void;
         let typeRandom = Math.random();
         if (typeRandom < 0.1) {
             image = this.resources.getImage("dirt");
-            onCollided = (o: Obstacle) => {
-                this.car.slowDown();
-            };
+            onCollided = Game.onDirtCollided;
         } else if (typeRandom < 0.3) {
             image = this.resources.getImage("money");
-            onCollided = (o: Obstacle) => {
-                o.isVisible = false;
-                this.hud.score += 50;
-            };
+            onCollided = Game.onMoneyCollided;
         } else {
             image = this.resources.getImage("wall");
-            onCollided = (o: Obstacle) => {
-                o.isVisible = false;
-                this.resources.playSound("explosion");
-
-                let animation = ObjectPool.get(Animation);
-                animation.setImage(this.resources.getImage("explosion"), 5, 5);
-                o.startAnimation(animation);
-
-                this.hud.lives--;
-                if (this.hud.lives > 0) {
-                    this.car.resetSpeed();
-                } else {
-                    this.car.stop();
-                    this.menu.isVisible = true;
-                }
-            };
+            onCollided = Game.onWallCollided;
         }
 
         let lane = Math.random() > 0.5 ? 0 : 1;
@@ -204,6 +186,32 @@ class Game {
         obstacle.y = this.road.y - obstacle.height;
 
         this.obstacles.push(obstacle);
+    }
+
+    static onWallCollided(game: Game, obstacle: Obstacle): void {
+        obstacle.isVisible = false;
+        game.resources.playSound("explosion");
+
+        let animation = ObjectPool.get(Animation);
+        animation.setImage(game.resources.getImage("explosion"), 5, 5);
+        obstacle.startAnimation(animation);
+
+        // game.hud.lives--;
+        if (game.hud.lives > 0) {
+            game.car.resetSpeed();
+        } else {
+            game.car.stop();
+            game.menu.isVisible = true;
+        }
+    }
+
+    static onDirtCollided(game: Game, obstacle: Obstacle): void {
+        game.car.slowDown();
+    }
+
+    static onMoneyCollided(game: Game, obstacle: Obstacle): void {
+        obstacle.isVisible = false;
+        game.hud.score += 50;
     }
 
     laneToX(lane: number, width: number): number {

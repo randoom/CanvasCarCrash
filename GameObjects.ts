@@ -156,7 +156,7 @@ export class Obstacle extends GameObject implements IPoolable {
     animation: Animation | null = null;
 
     // tslint:disable-next-line no-empty
-    onCollided: (o: Obstacle) => void = () => { };
+    onCollided: (...args: any[]) => void = () => { };
 
     setImage(image: HTMLImageElement): void {
         this.image = image;
