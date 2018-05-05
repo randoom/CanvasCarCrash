@@ -56,7 +56,7 @@ class Game {
         if (!this.lastFrameTime) this.lastFrameTime = t;
         let dt = t - this.lastFrameTime;
 
-        this.updateObjects(t, dt);
+        this.updateObjects(dt);
         this.checkCollisions();
 
         this.drawFrame();
@@ -64,7 +64,7 @@ class Game {
         this.lastFrameTime = t;
     }
 
-    updateObjects(t: number, dt: number): void {
+    updateObjects(dt: number): void {
         if (this.hud.lives > 0) {
             if (this.input.laneChangeRequested >= 0) {
                 this.car.lane = this.input.laneChangeRequested;
