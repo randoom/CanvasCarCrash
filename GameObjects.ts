@@ -33,29 +33,28 @@ export class Road extends GameObject {
     }
 
     draw(context: CanvasRenderingContext2D): void {
-        this.distance = this.distance % this.image.height;
+        let segmentHeight = this.distance % this.image.height;
 
-        if (this.distance > 0) {
+        if (segmentHeight > 0) {
             context.drawImage(this.image,
-                0, this.image.height - this.distance,
-                this.image.width, this.distance,
+                0, this.image.height - segmentHeight,
+                this.width, segmentHeight,
                 this.x, this.y,
-                this.image.width, this.distance);
+                this.width, segmentHeight);
         }
 
-        var i = 0;
-        while (true) {
-            var height = Math.min(this.image.height, this.height - (this.distance + i * this.image.height));
+        let drawnHeight = segmentHeight;
 
-            if (height <= 0) break;
+        while (drawnHeight < this.height) {
+            segmentHeight = Math.min(this.image.height, this.height - drawnHeight);
 
             context.drawImage(this.image,
                 0, 0,
-                this.image.width, height,
-                this.x, this.y + this.distance + i * this.image.height,
-                this.image.width, height);
+                this.width, segmentHeight,
+                this.x, this.y + drawnHeight,
+                this.width, segmentHeight);
 
-            i++;
+            drawnHeight += this.image.height;
         }
     }
 }
