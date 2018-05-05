@@ -7,12 +7,12 @@ export class ObjectPool {
     private static objects: { [type: string]: any[]; } = {};
 
     static get<T extends IPoolable>(ctor: { new(): T; }): T {
-        var typeName = (<any>ctor).name;
+        let typeName = (<any>ctor).name;
         if (!ObjectPool.objects[typeName]) {
             ObjectPool.objects[typeName] = [];
         }
 
-        var object: T = ObjectPool.objects[typeName].pop();
+        let object: T = ObjectPool.objects[typeName].pop();
         if (object) {
             object.reset();
         } else {

@@ -24,13 +24,13 @@ export class Input {
 
         if (this.hasTouch) {
             canvasEl.ontouchstart = (e: TouchEvent): void => {
-                var t: Touch = e.touches[0];
-                var x = t.pageX - canvasEl.offsetLeft;
+                let t: Touch = e.touches[0];
+                let x = t.pageX - canvasEl.offsetLeft;
                 this.laneClicked = x < canvasEl.width / 2 ? 0 : 1;
             };
         } else {
             canvasEl.onmousedown = (e: MouseEvent): void => {
-                var x = e.pageX - canvasEl.offsetLeft;
+                let x = e.pageX - canvasEl.offsetLeft;
                 this.laneClicked = x < canvasEl.width / 2 ? 0 : 1;
             };
         }

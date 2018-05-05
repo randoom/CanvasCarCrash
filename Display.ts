@@ -3,14 +3,12 @@ export class Display {
     private context2d: CanvasRenderingContext2D;
 
     constructor() {
-        var temp: any;
-
         this.canvasEl = document.createElement("canvas");
         this.canvas.width = 400;
         this.canvas.height = 600;
         document.body.appendChild(this.canvasEl);
 
-        temp = this.canvasEl.getContext("2d");
+        let temp = this.canvasEl.getContext("2d");
         if (!temp) throw "Can't get 2D context of canvas";
         this.context2d = temp;
     }

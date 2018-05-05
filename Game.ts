@@ -52,7 +52,7 @@ class Game {
         requestAnimationFrame((t) => this.gameLoop(t));
 
         if (!this.lastFrameTime) this.lastFrameTime = t;
-        var dt = t - this.lastFrameTime;
+        let dt = t - this.lastFrameTime;
 
         this.updateObjects(t, dt);
         this.checkCollisions();
@@ -79,8 +79,8 @@ class Game {
 
         this.road.distance += dt * this.car.speed;
 
-        for (var i = 0; i < this.obstacles.length; i++) {
-            var obstacle = this.obstacles[i];
+        for (let i = 0; i < this.obstacles.length; i++) {
+            let obstacle = this.obstacles[i];
             obstacle.update(dt);
             obstacle.y += dt * this.car.speed;
         }
@@ -98,8 +98,8 @@ class Game {
 
         this.road.draw(this.display.context);
 
-        for (var i = 0; i < this.obstacles.length; i++) {
-            var obstacle = this.obstacles[i];
+        for (let i = 0; i < this.obstacles.length; i++) {
+            let obstacle = this.obstacles[i];
             obstacle.draw(this.display.context);
         }
 
@@ -113,8 +113,8 @@ class Game {
     }
 
     checkCollisions(): void {
-        for (var i = 0; i < this.obstacles.length; i++) {
-            var obstacle = this.obstacles[i];
+        for (let i = 0; i < this.obstacles.length; i++) {
+            let obstacle = this.obstacles[i];
 
             if (!obstacle.hasColided && obstacle.lane === this.car.lane &&
                 (obstacle.y + obstacle.height > this.car.y) &&
@@ -127,7 +127,7 @@ class Game {
     }
 
     generateObstacles(): void {
-        var random = Math.random() * 200;
+        let random = Math.random() * 200;
 
         if (random < this.obstacleMinY - this.car.height) {
             this.createObstacle();
@@ -135,9 +135,9 @@ class Game {
 
         this.obstacleMinY = 1000;
 
-        var toRemove = [];
-        for (var i = 0; i < this.obstacles.length; i++) {
-            var obstacle = this.obstacles[i];
+        let toRemove = [];
+        for (let i = 0; i < this.obstacles.length; i++) {
+            let obstacle = this.obstacles[i];
 
             this.obstacleMinY = Math.min(this.obstacleMinY, obstacle.y - obstacle.height);
             if (obstacle.y > this.road.y + this.road.height) {
@@ -152,16 +152,16 @@ class Game {
 
     removeObstacles(indexes: number[]): void {
         indexes.reverse();
-        for (var i = 0; i < indexes.length; i++) {
-            var obstacle = this.obstacles.splice(indexes[i], 1)[0];
+        for (let i = 0; i < indexes.length; i++) {
+            let obstacle = this.obstacles.splice(indexes[i], 1)[0];
             obstacle.release();
         }
     }
 
     createObstacle(): void {
-        var image: HTMLImageElement;
-        var onCollided: (this: Game, o: Obstacle) => void;
-        var typeRandom = Math.random();
+        let image: HTMLImageElement;
+        let onCollided: (this: Game, o: Obstacle) => void;
+        let typeRandom = Math.random();
         if (typeRandom < 0.1) {
             image = this.resources.getImage("dirt");
             onCollided = (o: Obstacle) => {
@@ -179,7 +179,7 @@ class Game {
                 o.isVisible = false;
                 this.resources.playSound("explosion");
 
-                var animation = ObjectPool.get(Animation);
+                let animation = ObjectPool.get(Animation);
                 animation.setImage(this.resources.getImage("explosion"), 5, 5);
                 o.startAnimation(animation);
 
@@ -193,9 +193,9 @@ class Game {
             };
         }
 
-        var lane = Math.random() > 0.5 ? 0 : 1;
+        let lane = Math.random() > 0.5 ? 0 : 1;
 
-        var obstacle = ObjectPool.get(Obstacle);
+        let obstacle = ObjectPool.get(Obstacle);
         obstacle.reset();
         obstacle.setImage(image);
         obstacle.onCollided = onCollided;
@@ -221,8 +221,8 @@ class Game {
     }
 
     static init(): void {
-        var resources = new Resources(() => {
-            var game = new Game(resources);
+        let resources = new Resources(() => {
+            let game = new Game(resources);
             game.startNewGame();
             requestAnimationFrame((t) => game.gameLoop(t));
         });

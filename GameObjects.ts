@@ -125,8 +125,8 @@ export class Animation extends GameObject implements IPoolable {
     draw(context: CanvasRenderingContext2D): void {
         if (!this.isAnimating || !this.image) return;
 
-        var animX = this.width * Math.floor(this.currentFrame % 5);
-        var animY = this.height * Math.floor(this.currentFrame / 5);
+        let animX = this.width * Math.floor(this.currentFrame % 5);
+        let animY = this.height * Math.floor(this.currentFrame / 5);
 
         context.drawImage(this.image,
             animX, animY,
@@ -212,7 +212,7 @@ export class Menu extends GameObject {
     draw(context: CanvasRenderingContext2D): void {
         if (!this.isVisible) return;
 
-        var menuItemText = "New Game";
+        let menuItemText = "New Game";
         context.font = "30px Arial";
         context.fillStyle = "#f00";
         context.textAlign = "center";
