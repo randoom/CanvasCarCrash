@@ -43,7 +43,7 @@ export class Road extends GameObject {
                 this.width, segmentHeight);
         }
 
-        let drawnHeight = segmentHeight;
+        let drawnHeight = Math.floor(segmentHeight);
 
         while (drawnHeight < this.height) {
             segmentHeight = Math.min(this.image.height, this.height - drawnHeight);
