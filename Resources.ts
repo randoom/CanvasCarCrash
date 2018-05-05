@@ -18,7 +18,8 @@ export class Resources {
     }
 
     public loadSound(name: string, fileName: string): void {
-        this.sounds[name] = new Audio("sounds/" + fileName);
+        let sound = this.sounds[name] = new Audio("sounds/" + fileName);
+        sound.load();
     }
 
     public getImage(name: string): HTMLImageElement {
@@ -28,8 +29,10 @@ export class Resources {
     public playSound(name: string): void {
         let sound = this.sounds[name];
 
-        // tslint:disable-next-line no-empty
-        try { sound.play(); } catch (e) { }
+        try {
+            sound.load();
+            sound.play();
+        } catch (e) { /* ignored */ }
     }
 
     private onResourceLoaded(): void {
