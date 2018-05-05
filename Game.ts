@@ -196,7 +196,7 @@ class Game {
         animation.setImage(game.resources.getImage("explosion"), 5, 5);
         obstacle.startAnimation(animation);
 
-        // game.hud.lives--;
+        game.hud.lives--;
         if (game.hud.lives > 0) {
             game.car.resetSpeed();
         } else {
