@@ -1,6 +1,5 @@
 export interface IPoolable {
     reset(): void;
-    release(): void;
 }
 
 export class ObjectPool {
@@ -12,16 +11,12 @@ export class ObjectPool {
             ObjectPool.objects[typeName] = [];
         }
 
-        let object: T = ObjectPool.objects[typeName].pop();
-        if (object) {
-            object.reset();
-        } else {
-            object = new ctor();
-            object.release = () => {
-                ObjectPool.objects[typeName].push(object);
-            };
-        }
+        return ObjectPool.objects[typeName].pop() || new ctor();
+    }
 
-        return object;
+    static release<T extends IPoolable>(object: T): void {
+        object.reset();
+        let typeName = (<any>object.constructor).name;
+        ObjectPool.objects[typeName].push(object);
     }
 }

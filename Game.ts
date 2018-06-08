@@ -43,7 +43,10 @@ class Game {
         this.car.resetSpeed();
         this.car.lane = 0;
 
-        this.obstacles = [];
+        for (let i = 0; i < this.obstacles.length; i++) {
+            ObjectPool.release(this.obstacles[i]);
+        }
+        this.obstacles.length = 0;
 
         this.lastFrameTime = null;
     }
@@ -56,15 +59,14 @@ class Game {
         if (!this.lastFrameTime) this.lastFrameTime = t;
         let dt = t - this.lastFrameTime;
 
-        this.updateObjects(dt);
-        this.checkCollisions();
+        this.update(dt);
 
-        this.drawFrame();
+        this.draw();
 
         this.lastFrameTime = t;
     }
 
-    updateObjects(dt: number): void {
+    update(dt: number): void {
         if (this.hud.lives > 0) {
             if (this.input.laneChangeRequested >= 0) {
                 this.car.lane = this.input.laneChangeRequested;
@@ -88,9 +90,11 @@ class Game {
         }
 
         this.generateObstacles();
+
+        this.checkCollisions();
     }
 
-    drawFrame(): void {
+    draw(): void {
         this.display.clear();
 
         this.display.context.save();
@@ -107,9 +111,9 @@ class Game {
 
         this.car.draw(this.display.context);
 
-        this.menu.draw(this.display.context);
-
         this.display.context.restore();
+
+        this.menu.draw(this.display.context);
 
         this.hud.draw(this.display.context);
     }
@@ -156,33 +160,28 @@ class Game {
         indexes.reverse();
         for (let i = 0; i < indexes.length; i++) {
             let obstacle = this.obstacles.splice(indexes[i], 1)[0];
-            obstacle.release();
+            ObjectPool.release(obstacle);
+            // obstacle.reset();
         }
     }
 
     createObstacle(): void {
-        let image: HTMLImageElement;
-        let onCollided: (g: Game, o: Obstacle) => void;
+        let obstacle = ObjectPool.get(Obstacle);
+
         let typeRandom = Math.random();
         if (typeRandom < 0.1) {
-            image = this.resources.getImage("dirt");
-            onCollided = Game.onDirtCollided;
+            obstacle.setImage(this.resources.getImage("dirt"));
+            obstacle.onCollided = Game.onDirtCollided;
         } else if (typeRandom < 0.3) {
-            image = this.resources.getImage("money");
-            onCollided = Game.onMoneyCollided;
+            obstacle.setImage(this.resources.getImage("money"));
+            obstacle.onCollided = Game.onMoneyCollided;
         } else {
-            image = this.resources.getImage("wall");
-            onCollided = Game.onWallCollided;
+            obstacle.setImage(this.resources.getImage("wall"));
+            obstacle.onCollided = Game.onWallCollided;
         }
 
-        let lane = Math.random() > 0.5 ? 0 : 1;
-
-        let obstacle = ObjectPool.get(Obstacle);
-        obstacle.reset();
-        obstacle.setImage(image);
-        obstacle.onCollided = onCollided;
-        obstacle.lane = lane;
-        obstacle.x = this.laneToX(lane, obstacle.width);
+        obstacle.lane = Math.random() > 0.5 ? 0 : 1;
+        obstacle.x = this.laneToX(obstacle.lane, obstacle.width);
         obstacle.y = this.road.y - obstacle.height;
 
         this.obstacles.push(obstacle);
@@ -232,7 +231,7 @@ class Game {
         let resources = new Resources(() => {
             let game = new Game(resources);
             game.startNewGame();
-            requestAnimationFrame((t) => game.gameLoop(t));
+            requestAnimationFrame(game.bindedGameLoop);
         });
         this.loadResources(resources);
     }

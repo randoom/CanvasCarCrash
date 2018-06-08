@@ -1,4 +1,4 @@
-import { IPoolable } from "./ObjectPool";
+import { IPoolable, ObjectPool } from "./ObjectPool";
 
 export enum ObstacleType {
     wall = "wall",
@@ -135,10 +135,6 @@ export class Animation extends GameObject implements IPoolable {
             this.width, this.height);
     }
 
-    release(): void {
-        throw new Error("Method not implemented.");
-    }
-
     reset(): void {
         this.elapsed = 0;
         this.currentFrame = 0;
@@ -165,7 +161,9 @@ export class Obstacle extends GameObject implements IPoolable {
     }
 
     startAnimation(animation: Animation): void {
-        if (this.animation) animation.release();
+        if (this.animation) {
+            this.animation.reset();
+        }
 
         this.animation = animation;
         this.update(0);
@@ -178,7 +176,7 @@ export class Obstacle extends GameObject implements IPoolable {
             this.animation.y = this.y + this.height / 2;
 
             if (!this.animation.isAnimating) {
-                this.animation.release();
+                ObjectPool.release(this.animation);
                 this.animation = null;
             }
         }
@@ -196,11 +194,12 @@ export class Obstacle extends GameObject implements IPoolable {
         }
     }
 
-    release(): void {
-        throw new Error("Method not implemented.");
-    }
-
     reset(): void {
+        if (this.animation) {
+            ObjectPool.release(this.animation);
+            this.animation = null;
+        }
+
         this.isVisible = true;
         this.hasColided = false;
     }
