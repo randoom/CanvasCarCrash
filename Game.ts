@@ -2,7 +2,7 @@ import { Resources } from "./Resources";
 import { Input, KeyCodes } from "./Input";
 import { Display } from "./Display";
 import { ObjectPool } from "./ObjectPool";
-import { Road, Car, Obstacle, ObstacleType, Animation, Hud, Menu } from "./GameObjects";
+import { Road, Car, Obstacle, Animation, Hud, Menu } from "./GameObjects";
 
 class Game {
     resources: Resources;
@@ -204,7 +204,7 @@ class Game {
         }
     }
 
-    static onDirtCollided(game: Game, obstacle: Obstacle): void {
+    static onDirtCollided(game: Game): void {
         game.car.slowDown();
     }
 

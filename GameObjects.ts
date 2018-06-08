@@ -1,11 +1,5 @@
 import { IPoolable, ObjectPool } from "./ObjectPool";
 
-export enum ObstacleType {
-    wall = "wall",
-    money = "money",
-    dirt = "dirt"
-}
-
 abstract class GameObject {
     x: number = 0;
     y: number = 0;
