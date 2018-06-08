@@ -3,46 +3,5 @@ html, body
     font-family: arial,sans-serif;
     margin: 0;
     padding: 0;
-}
-
-/* clearfix */
-.clearfix:before, .clearfix:after
-{
-    content: "";
-    display: table;
-}
-.clearfix:after
-{
-    clear: both;
-}
-.clearfix
-{
-    zoom: 1;
-}
-
-#main
-{
-    width: 400px;
-    margin: 10px auto 0 auto;
     text-align: center;
-}
-
-div.key
-{
-    width: 80px;
-    height: 80px;
-    background-color: #ccc;
-    float: left;
-    margin-left: 10px;
-    text-align: center;
-}
-
-div.score {    
-    font-weight: bold;
-    float: left;
-}
-
-div.lives {
-    font-weight: bold;
-    float: right;
 }
