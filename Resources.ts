@@ -1,5 +1,7 @@
 
 export class Resources {
+    private readonly rootPath = "../";
+
     private finishedCallback: () => void;
     private resourcesToLoad = 0;
     private images: { [name: string]: HTMLImageElement; } = {};
@@ -14,11 +16,11 @@ export class Resources {
 
         let img = this.images[name] = new Image();
         img.onload = () => this.onResourceLoaded();
-        img.src = "images/" + fileName;
+        img.src = this.rootPath + "images/" + fileName;
     }
 
     public loadSound(name: string, fileName: string): void {
-        let sound = this.sounds[name] = new Audio("sounds/" + fileName);
+        let sound = this.sounds[name] = new Audio(this.rootPath + "sounds/" + fileName);
         sound.load();
     }
 
