@@ -3,7 +3,8 @@
     "target": "es5",
     "sourceMap": true,
     "module": "amd",
-    "strict": true
+    "strict": true,
+    "outDir": "dist/js"
   },
   "include": [
     "*.ts"
