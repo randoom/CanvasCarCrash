@@ -1,6 +1,6 @@
 
 export class Resources {
-    private readonly rootPath = "../";
+    private readonly rootPath = "./";
 
     private finishedCallback: () => void;
     private resourcesToLoad = 0;
